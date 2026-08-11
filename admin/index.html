@@ -75,8 +75,8 @@
   <div class="tab-panel" id="tab-gallery" style="display:none">
     <div class="admin-panel">
       <h2>사진 업로드</h2>
-      <div class="field"><label>사진 파일</label><input type="file" id="photo-file" accept="image/*"></div>
-      <div class="field"><label>설명(선택)</label><input id="photo-caption" placeholder="예: 2026 여름 수련회"></div>
+      <div class="field"><label>사진 파일 (여러 장 선택 가능)</label><input type="file" id="photo-file" accept="image/*" multiple></div>
+      <div class="field"><label>설명(선택, 모든 사진에 동일하게 적용됩니다)</label><input id="photo-caption" placeholder="예: 2026 여름 수련회"></div>
       <div class="form-grid">
         <div class="field">
           <label>부서</label>
@@ -303,15 +303,34 @@
     const department = document.getElementById('photo-department').value;
     const photo_year = Number(document.getElementById('photo-year').value) || new Date().getFullYear();
     const msg = document.getElementById('photo-msg');
-    const file = fileInput.files[0];
-    if (!file) { msg.textContent = '사진 파일을 선택해주세요.'; return; }
-    const path = safeFileName(file);
-    const { error: uploadError } = await sb.storage.from('gallery-photos').upload(path, file);
-    if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
-    const { data: pub } = sb.storage.from('gallery-photos').getPublicUrl(path);
-    const { error: insertError } = await sb.from('photos').insert({ url: pub.publicUrl, caption, department, photo_year });
-    msg.style.color = insertError ? '#b23b3b' : '#2b7a3b';
-    msg.textContent = insertError ? '저장 실패: ' + insertError.message : '업로드되었습니다.';
+    const files = Array.from(fileInput.files);
+    if (files.length === 0) { msg.textContent = '사진 파일을 선택해주세요.'; return; }
+
+    const uploadBtn = document.getElementById('upload-photo-btn');
+    uploadBtn.disabled = true;
+    const rows = [];
+    let failCount = 0;
+    for (let i = 0; i < files.length; i++) {
+      msg.style.color = '#6b6b6b';
+      msg.textContent = `업로드 중... (${i + 1}/${files.length})`;
+      const file = files[i];
+      const path = safeFileName(file);
+      const { error: uploadError } = await sb.storage.from('gallery-photos').upload(path, file);
+      if (uploadError) { failCount++; continue; }
+      const { data: pub } = sb.storage.from('gallery-photos').getPublicUrl(path);
+      rows.push({ url: pub.publicUrl, caption, department, photo_year });
+    }
+    uploadBtn.disabled = false;
+
+    let insertError = null;
+    if (rows.length > 0) {
+      const result = await sb.from('photos').insert(rows);
+      insertError = result.error;
+    }
+    msg.style.color = insertError || failCount > 0 ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = insertError
+      ? '저장 실패: ' + insertError.message
+      : `${rows.length}장 업로드 완료` + (failCount > 0 ? `, ${failCount}장 실패` : '');
     fileInput.value = '';
     document.getElementById('photo-caption').value = '';
     loadPhotos();
