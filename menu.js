@@ -131,6 +131,40 @@ async function applyTheme() {
   } catch (e) {}
 }
 
+const POPUP_DISMISS_KEY = 'popupDismissedUntil';
+
+async function initPopup() {
+  try {
+    const { data } = await sb.from('popup_settings').select('*').eq('id', 1).single();
+    if (!data || !data.active || !data.image_url) return;
+    const dismissedUntil = localStorage.getItem(POPUP_DISMISS_KEY);
+    if (dismissedUntil && Date.now() < Number(dismissedUntil)) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'site-popup';
+    const imgTag = `<img src="${data.image_url}" alt="공지">`;
+    overlay.innerHTML = `
+      <div class="site-popup-inner">
+        ${data.link_url ? `<a href="${data.link_url}" target="_blank" rel="noopener">${imgTag}</a>` : imgTag}
+        <div class="site-popup-actions">
+          <button id="popup-dismiss-today">오늘 하루 보지 않기</button>
+          <button id="popup-close">닫기</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById('popup-close').addEventListener('click', () => overlay.remove());
+    document.getElementById('popup-dismiss-today').addEventListener('click', () => {
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+      localStorage.setItem(POPUP_DISMISS_KEY, String(endOfDay.getTime()));
+      overlay.remove();
+    });
+  } catch (e) {}
+}
+
 initMenuOverlays();
 initMenu();
 applyTheme();
+initPopup();

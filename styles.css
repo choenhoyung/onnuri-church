@@ -255,6 +255,37 @@ p.section-sub {
 .location .info dt:first-child { margin-top: 0; }
 .location .info dd { color: var(--muted); margin-top: 0.3rem; }
 
+/* 팝업 공지 */
+#site-popup {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+  max-width: 320px;
+  width: calc(100vw - 20px);
+}
+.site-popup-inner {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+.site-popup-inner img { width: 100%; display: block; }
+.site-popup-actions { display: flex; }
+.site-popup-actions button {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: none;
+  border-top: 1px solid #e4ddcd;
+  background: #f2ede2;
+  color: var(--ink);
+  cursor: pointer;
+}
+.site-popup-actions button:first-child { border-right: 1px solid #e4ddcd; }
+.site-popup-actions button:hover { background: #e9e2d2; }
+
 /* 히어로 스타일: 퀵메뉴 (모던) */
 .quick-menu { display: none; }
 body[data-hero-style="modern"] .quick-menu {

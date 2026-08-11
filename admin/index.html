@@ -34,6 +34,7 @@
       <button class="tab-btn" data-tab="menu"><span class="tab-icon">🧭</span><span>메뉴 관리</span></button>
       <button class="tab-btn" data-tab="theme"><span class="tab-icon">🎨</span><span>사이트 꾸미기</span></button>
       <button class="tab-btn" data-tab="sermons"><span class="tab-icon">▶️</span><span>설교 영상</span></button>
+      <button class="tab-btn" data-tab="popup"><span class="tab-icon">📢</span><span>팝업 공지</span></button>
     </nav>
     <button class="btn small" id="logout-btn">로그아웃</button>
   </aside>
@@ -200,6 +201,25 @@
       <div class="row-list" id="sermons-admin-list" style="margin-top:1rem"></div>
     </div>
   </div>
+
+  <!-- 팝업 공지 -->
+  <div class="tab-panel" id="tab-popup" style="display:none">
+    <div class="admin-panel">
+      <h2>팝업 공지</h2>
+      <p class="hint">사이트 접속 시 화면 왼쪽 위에 뜨는 이미지 팝업입니다. "닫기"는 이번 방문만, "오늘 하루 보지 않기"는 하루 동안 다시 안 보이게 합니다.</p>
+      <div class="field" style="margin-top:1.2rem"><label>팝업 이미지</label><input type="file" id="popup-file" accept="image/*"></div>
+      <div class="field"><label>클릭 시 이동할 링크(선택)</label><input id="popup-link" placeholder="https://..."></div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+          <input type="checkbox" id="popup-active" style="width:auto">
+          팝업 활성화 (체크 해제 시 사이트에 표시되지 않음)
+        </label>
+      </div>
+      <div id="popup-preview" style="margin:1rem 0"></div>
+      <button class="btn gold" id="save-popup-btn">저장</button>
+      <p class="error-msg" id="popup-msg"></p>
+    </div>
+  </div>
   </div>
   </main>
 </div>
@@ -241,6 +261,7 @@
       loadTheme();
       loadYoutubeSettings();
       loadSermonsAdminList();
+      loadPopupSettings();
     } else {
       loginView.style.display = 'block';
       dashboardView.style.display = 'none';
@@ -733,6 +754,45 @@
       msg.style.color = '#b23b3b';
       msg.textContent = '동기화 실패: ' + e.message;
     }
+  });
+
+  // ---- 팝업 공지 ----
+  let currentPopupImageUrl = '';
+
+  async function loadPopupSettings() {
+    const { data } = await sb.from('popup_settings').select('*').eq('id', 1).single();
+    if (!data) return;
+    currentPopupImageUrl = data.image_url || '';
+    document.getElementById('popup-link').value = data.link_url || '';
+    document.getElementById('popup-active').checked = !!data.active;
+    const preview = document.getElementById('popup-preview');
+    preview.innerHTML = currentPopupImageUrl
+      ? `<img src="${currentPopupImageUrl}" style="max-width:220px;border-radius:8px;display:block">`
+      : '<p class="hint">등록된 이미지가 없습니다.</p>';
+  }
+
+  document.getElementById('save-popup-btn').addEventListener('click', async () => {
+    const msg = document.getElementById('popup-msg');
+    const fileInput = document.getElementById('popup-file');
+    const link_url = document.getElementById('popup-link').value.trim();
+    const active = document.getElementById('popup-active').checked;
+    let image_url = currentPopupImageUrl;
+
+    const file = fileInput.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
+      if (file.size > 5 * 1024 * 1024) { msg.textContent = '이미지 용량은 5MB 이하여야 합니다.'; return; }
+      const path = safeFileName(file);
+      const { error: uploadError } = await sb.storage.from('popup-images').upload(path, file);
+      if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
+      const { data: pub } = sb.storage.from('popup-images').getPublicUrl(path);
+      image_url = pub.publicUrl;
+    }
+
+    const { error } = await sb.from('popup_settings').update({ image_url, link_url, active }).eq('id', 1);
+    msg.style.color = error ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = error ? '저장 실패: ' + error.message : '저장되었습니다.';
+    if (!error) loadPopupSettings();
   });
 
   checkSession();
