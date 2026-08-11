@@ -24,19 +24,21 @@
   <p class="error-msg" id="login-error"></p>
 </div>
 
-<div id="dashboard-view" class="admin-shell" style="display:none">
-  <div class="top-bar">
-    <h1>관리자 페이지</h1>
+<div id="dashboard-view" class="admin-dashboard" style="display:none">
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">🏛️ 관리자</div>
+    <nav class="sidebar-nav">
+      <button class="tab-btn active" data-tab="home"><span class="tab-icon">📝</span><span>홈페이지 문구</span></button>
+      <button class="tab-btn" data-tab="gallery"><span class="tab-icon">🖼️</span><span>앨범</span></button>
+      <button class="tab-btn" data-tab="bulletins"><span class="tab-icon">📰</span><span>주보 게시판</span></button>
+      <button class="tab-btn" data-tab="menu"><span class="tab-icon">🧭</span><span>메뉴 관리</span></button>
+      <button class="tab-btn" data-tab="theme"><span class="tab-icon">🎨</span><span>사이트 꾸미기</span></button>
+    </nav>
     <button class="btn small" id="logout-btn">로그아웃</button>
-  </div>
+  </aside>
 
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="home">홈페이지 문구</button>
-    <button class="tab-btn" data-tab="gallery">앨범</button>
-    <button class="tab-btn" data-tab="bulletins">주보 게시판</button>
-    <button class="tab-btn" data-tab="menu">메뉴 관리</button>
-  </div>
-
+  <main class="admin-main">
+  <div class="admin-content">
   <!-- 홈페이지 문구 -->
   <div class="tab-panel" id="tab-home">
     <div class="admin-panel">
@@ -127,6 +129,41 @@
       <p class="error-msg" id="menu-msg"></p>
     </div>
   </div>
+
+  <!-- 사이트 꾸미기 -->
+  <div class="tab-panel" id="tab-theme" style="display:none">
+    <div class="admin-panel">
+      <h2>사이트 꾸미기</h2>
+      <p class="hint">배너 색상과 사이트 전체 글꼴을 바꿀 수 있어요. 저장하면 실제 사이트에 바로 반영됩니다.</p>
+      <div class="form-grid" style="margin-top:1.2rem">
+        <div class="field">
+          <label>배너 배경색</label>
+          <input type="color" id="theme-banner-bg" value="#1c2b3a">
+        </div>
+        <div class="field">
+          <label>배너 글자색</label>
+          <input type="color" id="theme-banner-text" value="#ffffff">
+        </div>
+        <div class="field">
+          <label>사이트 글꼴</label>
+          <select id="theme-font">
+            <option value="">기본값 (Noto Sans KR)</option>
+            <option value="Gowun Dodum">고운돋움 (Gowun Dodum)</option>
+            <option value="Nanum Gothic">나눔고딕 (Nanum Gothic)</option>
+            <option value="Jua">주아체 (Jua)</option>
+            <option value="Do Hyeon">도현체 (Do Hyeon)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:1.4rem;display:flex;gap:0.6rem;align-items:center">
+        <button class="btn" id="reset-theme-btn">기본값으로 되돌리기</button>
+        <button class="btn gold" id="save-theme-btn">저장</button>
+      </div>
+      <p class="error-msg" id="theme-msg"></p>
+    </div>
+  </div>
+  </div>
+  </main>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -163,6 +200,7 @@
       loadPhotos();
       loadBulletins();
       loadMenuAdmin();
+      loadTheme();
     } else {
       loginView.style.display = 'block';
       dashboardView.style.display = 'none';
@@ -525,6 +563,33 @@
     const { error } = await sb.from('site_menu').update({ menu: menuState }).eq('id', 1);
     msg.style.color = error ? '#b23b3b' : '#2b7a3b';
     msg.textContent = error ? '저장 실패: ' + error.message : '메뉴가 저장되었습니다.';
+  });
+
+  // ---- 사이트 꾸미기 ----
+  async function loadTheme() {
+    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family').eq('id', 1).single();
+    if (!data) return;
+    document.getElementById('theme-banner-bg').value = data.banner_bg_color || '#1c2b3a';
+    document.getElementById('theme-banner-text').value = data.banner_text_color || '#ffffff';
+    document.getElementById('theme-font').value = data.font_family || '';
+  }
+
+  document.getElementById('save-theme-btn').addEventListener('click', async () => {
+    const banner_bg_color = document.getElementById('theme-banner-bg').value;
+    const banner_text_color = document.getElementById('theme-banner-text').value;
+    const font_family = document.getElementById('theme-font').value;
+    const msg = document.getElementById('theme-msg');
+    const { error } = await sb.from('site_settings').update({ banner_bg_color, banner_text_color, font_family }).eq('id', 1);
+    msg.style.color = error ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = error ? '저장 실패: ' + error.message : '저장되었습니다. 실제 사이트에 바로 반영됩니다.';
+  });
+
+  document.getElementById('reset-theme-btn').addEventListener('click', async () => {
+    const msg = document.getElementById('theme-msg');
+    const { error } = await sb.from('site_settings').update({ banner_bg_color: '', banner_text_color: '', font_family: '' }).eq('id', 1);
+    if (!error) loadTheme();
+    msg.style.color = error ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = error ? '실패: ' + error.message : '기본값으로 되돌렸습니다.';
   });
 
   checkSession();
