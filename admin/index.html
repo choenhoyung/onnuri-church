@@ -231,6 +231,7 @@
       document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
       btn.classList.add('active');
       document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
+      window.scrollTo(0, 0);
     });
   });
 
