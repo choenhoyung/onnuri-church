@@ -94,6 +94,7 @@ header nav a:hover, header nav a.active { opacity: 1; color: var(--gold); }
   padding: 6vh 1.5rem; z-index: 1000;
   opacity: 0; transition: opacity 0.22s ease;
 }
+.sitemap-modal[hidden] { display: none; }
 .sitemap-modal.open { opacity: 1; }
 .sitemap-modal-inner {
   background: white; border-radius: 16px; padding: 2.8rem 2.5rem;
