@@ -69,6 +69,19 @@ function renderDrawer(menu) {
   });
 }
 
+const QUICK_MENU_ICONS = ['🙏', '📖', '📰', '📍', '💒', '✝️'];
+
+function renderQuickMenu(menu) {
+  const grid = document.getElementById('quick-menu');
+  if (!grid) return;
+  grid.innerHTML = menu.map((item, i) => `
+    <a href="${item.url || '#'}">
+      <div style="font-size:1.6rem;margin-bottom:0.5rem">${QUICK_MENU_ICONS[i % QUICK_MENU_ICONS.length]}</div>
+      <div>${item.title}</div>
+    </a>
+  `).join('');
+}
+
 async function initMenu() {
   let menu = DEFAULT_MENU;
   try {
@@ -78,6 +91,7 @@ async function initMenu() {
   renderNav(menu);
   renderSitemap(menu);
   renderDrawer(menu);
+  renderQuickMenu(menu);
 }
 
 function initMenuOverlays() {
@@ -107,12 +121,13 @@ function initMenuOverlays() {
 
 async function applyTheme() {
   try {
-    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family').eq('id', 1).single();
+    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family, hero_style').eq('id', 1).single();
     if (!data) return;
     const root = document.documentElement.style;
     if (data.banner_bg_color) root.setProperty('--banner-bg', data.banner_bg_color);
     if (data.banner_text_color) root.setProperty('--banner-text', data.banner_text_color);
     if (data.font_family) root.setProperty('--font-primary', `'${data.font_family}', 'Noto Sans KR', sans-serif`);
+    document.body.dataset.heroStyle = data.hero_style || '';
   } catch (e) {}
 }
 

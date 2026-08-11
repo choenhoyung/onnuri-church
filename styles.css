@@ -255,6 +255,64 @@ p.section-sub {
 .location .info dt:first-child { margin-top: 0; }
 .location .info dd { color: var(--muted); margin-top: 0.3rem; }
 
+/* 히어로 스타일: 퀵메뉴 (모던) */
+.quick-menu { display: none; }
+body[data-hero-style="modern"] .quick-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem;
+  max-width: 1000px;
+  margin: -3rem auto 0;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 5;
+}
+body[data-hero-style="modern"] .quick-menu a {
+  display: block;
+  background: white;
+  border-radius: 14px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--ink);
+  transition: transform 0.15s;
+}
+body[data-hero-style="modern"] .quick-menu a:hover { transform: translateY(-3px); }
+
+/* 히어로 스타일: 헤더 톤 (모던/커뮤니티는 화이트 헤더) */
+body[data-hero-style="modern"] header,
+body[data-hero-style="community"] header {
+  background: white;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+}
+body[data-hero-style="modern"] header .brand,
+body[data-hero-style="community"] header .brand,
+body[data-hero-style="modern"] .nav-top-link,
+body[data-hero-style="community"] .nav-top-link,
+body[data-hero-style="modern"] .admin-link-header,
+body[data-hero-style="community"] .admin-link-header {
+  color: var(--ink);
+}
+body[data-hero-style="modern"] .hamburger-btn,
+body[data-hero-style="community"] .hamburger-btn { border-color: rgba(0,0,0,0.2); }
+body[data-hero-style="modern"] .hamburger-btn span,
+body[data-hero-style="community"] .hamburger-btn span { background: var(--ink); }
+
+/* 히어로 스타일: 커뮤니티(슬림 배너) */
+body[data-hero-style="community"] .hero { padding: 3rem 1.5rem !important; }
+body[data-hero-style="community"] .hero .cross { display: none; }
+
+/* 히어로 스타일: 아트풍(플로팅 내비) */
+body[data-hero-style="artistic"] header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  background: transparent;
+}
+body[data-hero-style="artistic"] .hero,
+body[data-hero-style="artistic"] .page-hero { padding-top: 9rem; }
+
 /* 최근 설교 */
 .sermon-grid {
   display: grid;
