@@ -33,6 +33,7 @@
       <button class="tab-btn" data-tab="bulletins"><span class="tab-icon">📰</span><span>주보 게시판</span></button>
       <button class="tab-btn" data-tab="menu"><span class="tab-icon">🧭</span><span>메뉴 관리</span></button>
       <button class="tab-btn" data-tab="theme"><span class="tab-icon">🎨</span><span>사이트 꾸미기</span></button>
+      <button class="tab-btn" data-tab="sermons"><span class="tab-icon">▶️</span><span>설교 영상</span></button>
     </nav>
     <button class="btn small" id="logout-btn">로그아웃</button>
   </aside>
@@ -162,6 +163,34 @@
       <p class="error-msg" id="theme-msg"></p>
     </div>
   </div>
+
+  <!-- 설교 영상 -->
+  <div class="tab-panel" id="tab-sermons" style="display:none">
+    <div class="admin-panel">
+      <h2>유튜브 연동</h2>
+      <p class="hint">유튜브 채널의 최신 영상을 가져와 홈페이지 "최근 설교" 섹션에 표시합니다.</p>
+      <div class="form-grid" style="margin-top:1.2rem">
+        <div class="field">
+          <label>YouTube API 키</label>
+          <input type="password" id="yt-api-key" placeholder="AIza...">
+        </div>
+        <div class="field">
+          <label>채널 URL</label>
+          <input id="yt-channel-url" placeholder="https://www.youtube.com/@채널명">
+        </div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:0.6rem;align-items:center">
+        <button class="btn gold" id="save-yt-settings-btn">설정 저장</button>
+        <button class="btn" id="sync-sermons-btn">지금 동기화</button>
+      </div>
+      <p class="error-msg" id="yt-msg"></p>
+    </div>
+
+    <div class="admin-panel">
+      <h2>가져온 영상 목록</h2>
+      <div class="row-list" id="sermons-admin-list" style="margin-top:1rem"></div>
+    </div>
+  </div>
   </div>
   </main>
 </div>
@@ -201,6 +230,8 @@
       loadBulletins();
       loadMenuAdmin();
       loadTheme();
+      loadYoutubeSettings();
+      loadSermonsAdminList();
     } else {
       loginView.style.display = 'block';
       dashboardView.style.display = 'none';
@@ -591,6 +622,106 @@
     if (!error) loadTheme();
     msg.style.color = error ? '#b23b3b' : '#2b7a3b';
     msg.textContent = error ? '실패: ' + error.message : '기본값으로 되돌렸습니다.';
+  });
+
+  // ---- 설교 영상 (유튜브 연동) ----
+  function parseChannelUrl(url) {
+    const channelMatch = url.match(/\/channel\/(UC[\w-]+)/);
+    if (channelMatch) return { type: 'id', value: channelMatch[1] };
+    const handleMatch = url.match(/@([\w.-]+)/);
+    if (handleMatch) return { type: 'handle', value: handleMatch[1] };
+    return null;
+  }
+
+  async function fetchUploadsPlaylistId(apiKey, ref) {
+    const param = ref.type === 'id' ? `id=${ref.value}` : `forHandle=${encodeURIComponent(ref.value)}`;
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&${param}&key=${apiKey}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    if (!data.items || !data.items.length) throw new Error('채널을 찾을 수 없습니다.');
+    return data.items[0].contentDetails.relatedPlaylists.uploads;
+  }
+
+  async function fetchRecentVideos(apiKey, playlistId) {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=10&key=${apiKey}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    return (data.items || [])
+      .filter(item => item.snippet.title !== 'Private video' && item.snippet.title !== 'Deleted video')
+      .map(item => ({
+        video_id: item.snippet.resourceId.videoId,
+        title: item.snippet.title,
+        thumbnail_url: (item.snippet.thumbnails && (item.snippet.thumbnails.high || item.snippet.thumbnails.default) || {}).url || '',
+        published_at: item.snippet.publishedAt
+      }));
+  }
+
+  async function loadYoutubeSettings() {
+    const { data } = await sb.from('integration_settings').select('*').eq('id', 1).single();
+    if (!data) return;
+    document.getElementById('yt-api-key').value = data.youtube_api_key || '';
+    document.getElementById('yt-channel-url').value = data.youtube_channel_handle || '';
+  }
+
+  async function saveYoutubeSettings() {
+    const youtube_api_key = document.getElementById('yt-api-key').value.trim();
+    const youtube_channel_handle = document.getElementById('yt-channel-url').value.trim();
+    return sb.from('integration_settings').update({ youtube_api_key, youtube_channel_handle }).eq('id', 1);
+  }
+
+  async function loadSermonsAdminList() {
+    const list = document.getElementById('sermons-admin-list');
+    const { data } = await sb.from('sermons').select('*').order('published_at', { ascending: false });
+    if (!data || data.length === 0) {
+      list.innerHTML = '<p class="hint">아직 가져온 영상이 없습니다.</p>';
+      return;
+    }
+    list.innerHTML = data.map(v => `
+      <div class="row-item" data-id="${v.id}">
+        <img class="thumb" src="${v.thumbnail_url}">
+        <div class="meta"><div class="title">${v.title}</div><div class="sub">${v.published_at ? new Date(v.published_at).toLocaleDateString('ko-KR') : ''}</div></div>
+        <div class="row-actions">
+          <button class="btn small danger" onclick="deleteSermon(${v.id})">삭제</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.deleteSermon = async (id) => {
+    if (!confirm('이 영상을 목록에서 삭제할까요?')) return;
+    await sb.from('sermons').delete().eq('id', id);
+    loadSermonsAdminList();
+  };
+
+  document.getElementById('save-yt-settings-btn').addEventListener('click', async () => {
+    const msg = document.getElementById('yt-msg');
+    const { error } = await saveYoutubeSettings();
+    msg.style.color = error ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = error ? '저장 실패: ' + error.message : '설정이 저장되었습니다.';
+  });
+
+  document.getElementById('sync-sermons-btn').addEventListener('click', async () => {
+    const msg = document.getElementById('yt-msg');
+    const apiKey = document.getElementById('yt-api-key').value.trim();
+    const channelUrl = document.getElementById('yt-channel-url').value.trim();
+    if (!apiKey || !channelUrl) { msg.textContent = 'API 키와 채널 URL을 입력해주세요.'; return; }
+    const ref = parseChannelUrl(channelUrl);
+    if (!ref) { msg.textContent = '채널 URL 형식을 인식할 수 없습니다. @핸들 또는 /channel/ 형식을 사용해주세요.'; return; }
+    msg.style.color = '#6b6b6b';
+    msg.textContent = '동기화 중...';
+    try {
+      await saveYoutubeSettings();
+      const playlistId = await fetchUploadsPlaylistId(apiKey, ref);
+      const videos = await fetchRecentVideos(apiKey, playlistId);
+      const { error } = await sb.from('sermons').upsert(videos, { onConflict: 'video_id', ignoreDuplicates: true });
+      if (error) throw error;
+      msg.style.color = '#2b7a3b';
+      msg.textContent = `${videos.length}개 영상 확인 완료 (새 영상만 추가됨)`;
+      loadSermonsAdminList();
+    } catch (e) {
+      msg.style.color = '#b23b3b';
+      msg.textContent = '동기화 실패: ' + e.message;
+    }
   });
 
   checkSession();
