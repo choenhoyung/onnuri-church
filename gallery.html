@@ -11,16 +11,27 @@
 <body>
 
 <header>
-  <div class="brand">청주 온누리감리교회</div>
-  <nav>
-    <a href="index.html#worship">예배안내</a>
-    <a href="index.html#pastor">담임목사</a>
-    <a href="index.html#about">교회소개</a>
-    <a href="index.html#location">오시는길</a>
-    <a href="gallery.html" class="active">앨범</a>
-    <a href="bulletins.html">교회주보</a>
-  </nav>
+  <a class="brand" href="index.html">청주 온누리감리교회</a>
+  <nav id="site-nav" class="site-nav"></nav>
+  <div class="header-actions">
+    <a class="admin-link-header" href="admin/">관리자</a>
+    <button id="sitemap-btn" class="hamburger-btn" aria-label="전체 사이트맵 열기"><span></span><span></span><span></span></button>
+  </div>
 </header>
+
+<div id="sitemap-modal" class="sitemap-modal" hidden>
+  <div class="sitemap-modal-inner">
+    <button id="sitemap-close" class="sitemap-close" aria-label="닫기">✕</button>
+    <div id="sitemap-grid" class="sitemap-grid"></div>
+  </div>
+</div>
+
+<div id="mobile-drawer" class="mobile-drawer" hidden>
+  <div class="mobile-drawer-panel">
+    <button id="drawer-close" class="sitemap-close" aria-label="닫기">✕</button>
+    <div id="drawer-accordion" class="drawer-accordion"></div>
+  </div>
+</div>
 
 <div class="page-hero">
   <h1>앨범</h1>
@@ -55,6 +66,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="supabase-config.js"></script>
+<script src="menu.js"></script>
 <script>
   let allPhotos = [];
   let currentDept = '전체';

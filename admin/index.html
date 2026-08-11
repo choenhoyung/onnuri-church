@@ -34,6 +34,7 @@
     <button class="tab-btn active" data-tab="home">홈페이지 문구</button>
     <button class="tab-btn" data-tab="gallery">앨범</button>
     <button class="tab-btn" data-tab="bulletins">주보 게시판</button>
+    <button class="tab-btn" data-tab="menu">메뉴 관리</button>
   </div>
 
   <!-- 홈페이지 문구 -->
@@ -112,6 +113,20 @@
       <div class="row-list" id="bulletin-admin-list" style="margin-top:2rem"></div>
     </div>
   </div>
+
+  <!-- 메뉴 관리 -->
+  <div class="tab-panel" id="tab-menu" style="display:none">
+    <div class="admin-panel">
+      <h2>메뉴 / 사이트맵 관리</h2>
+      <p class="hint">상단 메뉴, 드롭다운, 전체 사이트맵, 모바일 메뉴에 모두 반영됩니다.</p>
+      <div id="menu-admin-list" style="margin-top:1.5rem"></div>
+      <div style="margin-top:1.5rem;display:flex;gap:0.6rem;align-items:center">
+        <button class="btn" id="add-menu-item-btn">+ 새 메뉴 추가</button>
+        <button class="btn gold" id="save-menu-btn">전체 저장</button>
+      </div>
+      <p class="error-msg" id="menu-msg"></p>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -147,6 +162,7 @@
       loadWorshipTimes();
       loadPhotos();
       loadBulletins();
+      loadMenuAdmin();
     } else {
       loginView.style.display = 'block';
       dashboardView.style.display = 'none';
@@ -407,6 +423,108 @@
     document.getElementById('b-description').value = '';
     fileInput.value = '';
     loadBulletins();
+  });
+
+  // ---- 메뉴 관리 ----
+  let menuState = [];
+
+  function escapeAttr(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  async function loadMenuAdmin() {
+    const { data } = await sb.from('site_menu').select('menu').eq('id', 1).single();
+    menuState = (data && data.menu) || [];
+    renderMenuAdmin();
+  }
+
+  function syncMenuStateFromDOM() {
+    document.querySelectorAll('.menu-item-block').forEach((block, i) => {
+      menuState[i].title = block.querySelector('.menu-title-input').value;
+      menuState[i].url = block.querySelector('.menu-url-input').value;
+      block.querySelectorAll('.submenu-row').forEach((row, j) => {
+        menuState[i].submenus[j].label = row.querySelector('.submenu-label-input').value;
+        menuState[i].submenus[j].url = row.querySelector('.submenu-url-input').value;
+      });
+    });
+  }
+
+  function renderMenuAdmin() {
+    const container = document.getElementById('menu-admin-list');
+    container.innerHTML = menuState.map((item, i) => `
+      <div class="menu-item-block" data-index="${i}">
+        <div class="menu-item-header">
+          <input class="menu-title-input" value="${escapeAttr(item.title)}" placeholder="메뉴 이름">
+          <input class="menu-url-input" value="${escapeAttr(item.url || '')}" placeholder="연결 주소 (예: index.html#about)">
+          <div class="row-actions">
+            <button class="btn small" onclick="moveMenuItem(${i}, -1)">▲</button>
+            <button class="btn small" onclick="moveMenuItem(${i}, 1)">▼</button>
+            <button class="btn small danger" onclick="removeMenuItem(${i})">삭제</button>
+          </div>
+        </div>
+        <div class="submenu-list">
+          ${(item.submenus || []).map((sub, j) => `
+            <div class="submenu-row" data-index="${j}">
+              <input class="submenu-label-input" value="${escapeAttr(sub.label)}" placeholder="서브메뉴 이름">
+              <input class="submenu-url-input" value="${escapeAttr(sub.url || '')}" placeholder="연결 주소">
+              <div class="row-actions">
+                <button class="btn small" onclick="moveSubmenuItem(${i}, ${j}, -1)">▲</button>
+                <button class="btn small" onclick="moveSubmenuItem(${i}, ${j}, 1)">▼</button>
+                <button class="btn small danger" onclick="removeSubmenuItem(${i}, ${j})">삭제</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn small gold" onclick="addSubmenuItem(${i})">+ 서브메뉴 추가</button>
+      </div>
+    `).join('');
+  }
+
+  window.moveMenuItem = (i, dir) => {
+    syncMenuStateFromDOM();
+    const j = i + dir;
+    if (j < 0 || j >= menuState.length) return;
+    [menuState[i], menuState[j]] = [menuState[j], menuState[i]];
+    renderMenuAdmin();
+  };
+  window.removeMenuItem = (i) => {
+    syncMenuStateFromDOM();
+    if (!confirm('이 메뉴를 삭제할까요?')) return;
+    menuState.splice(i, 1);
+    renderMenuAdmin();
+  };
+  window.addSubmenuItem = (i) => {
+    syncMenuStateFromDOM();
+    menuState[i].submenus = menuState[i].submenus || [];
+    menuState[i].submenus.push({ label: '새 서브메뉴', url: '#' });
+    renderMenuAdmin();
+  };
+  window.moveSubmenuItem = (i, j, dir) => {
+    syncMenuStateFromDOM();
+    const subs = menuState[i].submenus;
+    const k = j + dir;
+    if (k < 0 || k >= subs.length) return;
+    [subs[j], subs[k]] = [subs[k], subs[j]];
+    renderMenuAdmin();
+  };
+  window.removeSubmenuItem = (i, j) => {
+    syncMenuStateFromDOM();
+    menuState[i].submenus.splice(j, 1);
+    renderMenuAdmin();
+  };
+
+  document.getElementById('add-menu-item-btn').addEventListener('click', () => {
+    syncMenuStateFromDOM();
+    menuState.push({ title: '새 메뉴', url: '#', submenus: [] });
+    renderMenuAdmin();
+  });
+
+  document.getElementById('save-menu-btn').addEventListener('click', async () => {
+    syncMenuStateFromDOM();
+    const msg = document.getElementById('menu-msg');
+    const { error } = await sb.from('site_menu').update({ menu: menuState }).eq('id', 1);
+    msg.style.color = error ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = error ? '저장 실패: ' + error.message : '메뉴가 저장되었습니다.';
   });
 
   checkSession();

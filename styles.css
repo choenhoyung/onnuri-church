@@ -31,16 +31,122 @@ header .brand {
   font-size: 1.15rem;
   letter-spacing: -0.5px;
 }
-header nav {
-  display: flex;
-  gap: 1.6rem;
-  font-size: 0.95rem;
-}
 header nav a { opacity: 0.85; transition: opacity 0.15s; }
 header nav a:hover, header nav a.active { opacity: 1; color: var(--gold); }
-@media (max-width: 640px) {
-  header nav { gap: 1rem; font-size: 0.8rem; }
+
+/* 헤더 액션 */
+.header-actions { display: flex; align-items: center; gap: 1.2rem; }
+.admin-link-header { font-size: 0.82rem; opacity: 0.75; }
+.admin-link-header:hover { opacity: 1; color: var(--gold); }
+.hamburger-btn {
+  width: 36px; height: 36px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px;
+  background: transparent; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px;
+  cursor: pointer; flex-shrink: 0;
 }
+.hamburger-btn span { width: 18px; height: 2px; background: white; display: block; }
+
+/* 데스크톱 GNB */
+.site-nav { display: flex; gap: 0.2rem; }
+.nav-item { position: relative; }
+.nav-top-link {
+  display: block;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.95rem;
+  color: white;
+  opacity: 0.9;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+.nav-item:hover .nav-top-link, .nav-top-link.active { border-color: var(--gold); color: var(--gold); opacity: 1; }
+.nav-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 190px;
+  background: white;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+  padding: 0.5rem 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  z-index: 200;
+}
+.nav-item:hover .nav-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+.nav-dropdown a {
+  display: block;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+.nav-dropdown a:hover { background: var(--cream); color: var(--gold); }
+
+@media (max-width: 860px) {
+  .site-nav { display: none; }
+}
+
+/* 전체 사이트맵 모달 */
+.sitemap-modal {
+  position: fixed; inset: 0; background: rgba(20,32,43,0.72);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 6vh 1.5rem; z-index: 1000;
+  opacity: 0; transition: opacity 0.22s ease;
+}
+.sitemap-modal.open { opacity: 1; }
+.sitemap-modal-inner {
+  background: white; border-radius: 16px; padding: 2.8rem 2.5rem;
+  max-width: 1000px; width: 100%; max-height: 82vh; overflow-y: auto;
+  position: relative;
+  transform: translateY(-10px);
+  transition: transform 0.22s ease;
+}
+.sitemap-modal.open .sitemap-modal-inner { transform: translateY(0); }
+.sitemap-close {
+  position: absolute; top: 1.2rem; right: 1.4rem;
+  background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--muted);
+}
+.sitemap-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.2rem;
+}
+@media (max-width: 860px) {
+  .sitemap-grid { grid-template-columns: repeat(2, 1fr); gap: 1.6rem; }
+}
+.sitemap-col-title {
+  display: block; font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 1.05rem;
+  color: var(--navy); border-bottom: 2px solid var(--gold); padding-bottom: 0.6rem; margin-bottom: 0.8rem;
+}
+.sitemap-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; }
+.sitemap-col ul a { color: var(--muted); font-size: 0.9rem; }
+.sitemap-col ul a:hover { color: var(--gold); }
+
+/* 모바일 드로어 */
+.mobile-drawer {
+  position: fixed; inset: 0; background: rgba(20,32,43,0.5);
+  z-index: 1000; opacity: 0; transition: opacity 0.22s ease;
+}
+.mobile-drawer.open { opacity: 1; }
+.mobile-drawer-panel {
+  position: absolute; top: 0; right: 0; height: 100%;
+  width: 82vw; max-width: 340px; background: white;
+  padding: 2.2rem 1.6rem; overflow-y: auto;
+  transform: translateX(100%); transition: transform 0.25s ease;
+}
+.mobile-drawer.open .mobile-drawer-panel { transform: translateX(0); }
+.drawer-group { border-bottom: 1px solid #eee; }
+.drawer-group-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 0.95rem 0.2rem; background: none; border: none; text-align: left; cursor: pointer;
+}
+.drawer-group-btn a { font-size: 1rem; font-weight: 700; color: var(--navy); }
+.drawer-caret { transition: transform 0.2s; color: var(--muted); }
+.drawer-submenu {
+  max-height: 0; overflow: hidden; display: flex; flex-direction: column;
+  transition: max-height 0.25s ease; padding-left: 0.6rem;
+}
+.drawer-submenu.open { max-height: 500px; padding-bottom: 0.6rem; }
+.drawer-submenu a { padding: 0.5rem 0.3rem; color: var(--muted); font-size: 0.92rem; }
 
 .page-hero {
   background: var(--navy);
@@ -292,5 +398,15 @@ footer .admin-link:hover { color: var(--gold); }
 .row-actions { display: flex; gap: 0.5rem; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
 .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.menu-item-block { background: var(--cream); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+.menu-item-header { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.menu-item-header input { padding: 0.5rem 0.7rem; border: 1px solid #d9d3c6; border-radius: 6px; font-family: inherit; }
+.menu-item-header .menu-title-input { flex: 1; min-width: 120px; font-weight: 700; }
+.menu-item-header .menu-url-input { flex: 2; min-width: 160px; }
+.submenu-list { margin: 0.8rem 0 0.6rem; padding-left: 1rem; border-left: 2px solid #e4ddcd; display: flex; flex-direction: column; gap: 0.5rem; }
+.submenu-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.submenu-row input { padding: 0.4rem 0.6rem; border: 1px solid #d9d3c6; border-radius: 6px; font-family: inherit; font-size: 0.88rem; }
+.submenu-row .submenu-label-input { flex: 1; min-width: 100px; }
+.submenu-row .submenu-url-input { flex: 2; min-width: 140px; }
 .top-bar h1 { font-family: 'Noto Serif KR', serif; font-size: 1.5rem; }
 .hint { color: var(--muted); font-size: 0.82rem; margin-top: 0.4rem; }
