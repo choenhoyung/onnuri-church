@@ -32,7 +32,7 @@
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="home">홈페이지 문구</button>
-    <button class="tab-btn" data-tab="gallery">사진 갤러리</button>
+    <button class="tab-btn" data-tab="gallery">앨범</button>
     <button class="tab-btn" data-tab="bulletins">주보 게시판</button>
   </div>
 
@@ -77,6 +77,20 @@
       <h2>사진 업로드</h2>
       <div class="field"><label>사진 파일</label><input type="file" id="photo-file" accept="image/*"></div>
       <div class="field"><label>설명(선택)</label><input id="photo-caption" placeholder="예: 2026 여름 수련회"></div>
+      <div class="form-grid">
+        <div class="field">
+          <label>부서</label>
+          <select id="photo-department">
+            <option value="전체">전체</option>
+            <option value="유치부">유치부</option>
+            <option value="초등부">초등부</option>
+            <option value="학생부">학생부</option>
+            <option value="청년부">청년부</option>
+            <option value="장년부">장년부</option>
+          </select>
+        </div>
+        <div class="field"><label>연도</label><input id="photo-year" type="number" value="2026"></div>
+      </div>
       <button class="btn gold" id="upload-photo-btn">업로드</button>
       <p class="error-msg" id="photo-msg"></p>
       <div class="row-list" id="photo-list" style="margin-top:2rem"></div>
@@ -117,6 +131,11 @@
     const ext = dot >= 0 ? file.name.slice(dot + 1).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() : '';
     const rand = Math.random().toString(36).slice(2, 8);
     return `${Date.now()}-${rand}${ext ? '.' + ext : ''}`;
+  }
+
+  const DEPARTMENTS = ['전체', '유치부', '초등부', '학생부', '청년부', '장년부'];
+  function deptOptionsHtml(selected) {
+    return DEPARTMENTS.map(d => `<option value="${d}" ${d === selected ? 'selected' : ''}>${d}</option>`).join('');
   }
 
   async function checkSession() {
@@ -251,6 +270,8 @@
       <div class="row-item" data-id="${p.id}">
         <img class="thumb" src="${p.url}">
         <input class="p-edit-caption" value="${p.caption || ''}" placeholder="설명" style="flex:1;min-width:150px">
+        <select class="p-edit-department">${deptOptionsHtml(p.department)}</select>
+        <input class="p-edit-year" type="number" value="${p.photo_year}" style="width:80px">
         <div class="row-actions">
           <button class="btn small" onclick="savePhotoCaption(${p.id}, this)">저장</button>
           <button class="btn small danger" onclick="deletePhoto(${p.id}, '${p.url}')">삭제</button>
@@ -262,7 +283,9 @@
   window.savePhotoCaption = async (id, btn) => {
     const row = btn.closest('.row-item');
     const caption = row.querySelector('.p-edit-caption').value;
-    await sb.from('photos').update({ caption }).eq('id', id);
+    const department = row.querySelector('.p-edit-department').value;
+    const photo_year = Number(row.querySelector('.p-edit-year').value) || new Date().getFullYear();
+    await sb.from('photos').update({ caption, department, photo_year }).eq('id', id);
     loadPhotos();
   };
 
@@ -277,6 +300,8 @@
   document.getElementById('upload-photo-btn').addEventListener('click', async () => {
     const fileInput = document.getElementById('photo-file');
     const caption = document.getElementById('photo-caption').value.trim();
+    const department = document.getElementById('photo-department').value;
+    const photo_year = Number(document.getElementById('photo-year').value) || new Date().getFullYear();
     const msg = document.getElementById('photo-msg');
     const file = fileInput.files[0];
     if (!file) { msg.textContent = '사진 파일을 선택해주세요.'; return; }
@@ -284,7 +309,7 @@
     const { error: uploadError } = await sb.storage.from('gallery-photos').upload(path, file);
     if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
     const { data: pub } = sb.storage.from('gallery-photos').getPublicUrl(path);
-    const { error: insertError } = await sb.from('photos').insert({ url: pub.publicUrl, caption });
+    const { error: insertError } = await sb.from('photos').insert({ url: pub.publicUrl, caption, department, photo_year });
     msg.style.color = insertError ? '#b23b3b' : '#2b7a3b';
     msg.textContent = insertError ? '저장 실패: ' + insertError.message : '업로드되었습니다.';
     fileInput.value = '';

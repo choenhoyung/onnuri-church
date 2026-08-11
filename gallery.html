@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사진갤러리 - 청주 온누리감리교회</title>
+<title>앨범 - 청주 온누리감리교회</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
@@ -17,17 +17,30 @@
     <a href="index.html#pastor">담임목사</a>
     <a href="index.html#about">교회소개</a>
     <a href="index.html#location">오시는길</a>
-    <a href="gallery.html" class="active">사진갤러리</a>
+    <a href="gallery.html" class="active">앨범</a>
     <a href="bulletins.html">교회주보</a>
   </nav>
 </header>
 
 <div class="page-hero">
-  <h1>사진갤러리</h1>
+  <h1>앨범</h1>
   <p>교회의 소중한 순간들을 함께 나눠요</p>
 </div>
 
 <section>
+  <div class="gallery-filters">
+    <div class="dept-tabs" id="dept-tabs">
+      <button class="dept-tab active" data-dept="전체">전체</button>
+      <button class="dept-tab" data-dept="유치부">유치부</button>
+      <button class="dept-tab" data-dept="초등부">초등부</button>
+      <button class="dept-tab" data-dept="학생부">학생부</button>
+      <button class="dept-tab" data-dept="청년부">청년부</button>
+      <button class="dept-tab" data-dept="장년부">장년부</button>
+    </div>
+    <select id="year-select" class="year-select">
+      <option value="all">전체 연도</option>
+    </select>
+  </div>
   <div class="gallery-grid" id="gallery-grid">
     <p class="empty-state">사진을 불러오는 중입니다...</p>
   </div>
@@ -43,20 +56,58 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="supabase-config.js"></script>
 <script>
-  async function loadPhotos() {
+  let allPhotos = [];
+  let currentDept = '전체';
+
+  function populateYearOptions() {
+    const years = [...new Set(allPhotos.map(p => p.photo_year))].sort((a, b) => b - a);
+    const sel = document.getElementById('year-select');
+    sel.innerHTML = '<option value="all">전체 연도</option>' + years.map(y => `<option value="${y}">${y}년</option>`).join('');
+  }
+
+  function renderPhotos() {
     const grid = document.getElementById('gallery-grid');
-    const { data: photos, error } = await sb.from('photos').select('*').order('sort_order').order('created_at', { ascending: false });
-    if (error || !photos || photos.length === 0) {
-      grid.innerHTML = '<p class="empty-state">아직 등록된 사진이 없습니다.</p>';
+    const yearVal = document.getElementById('year-select').value;
+    const filtered = allPhotos.filter(p =>
+      (currentDept === '전체' || p.department === currentDept) &&
+      (yearVal === 'all' || String(p.photo_year) === yearVal)
+    );
+    if (filtered.length === 0) {
+      grid.innerHTML = allPhotos.length === 0
+        ? '<p class="empty-state">아직 등록된 사진이 없습니다.</p>'
+        : '<p class="empty-state">해당하는 사진이 없습니다.</p>';
       return;
     }
-    grid.innerHTML = photos.map(p => `
+    grid.innerHTML = filtered.map(p => `
       <figure>
         <img src="${p.url}" alt="${p.caption || '교회 사진'}" loading="lazy">
         ${p.caption ? `<figcaption>${p.caption}</figcaption>` : ''}
       </figure>
     `).join('');
   }
+
+  async function loadPhotos() {
+    const grid = document.getElementById('gallery-grid');
+    const { data: photos, error } = await sb.from('photos').select('*').order('sort_order').order('created_at', { ascending: false });
+    if (error || !photos) {
+      grid.innerHTML = '<p class="empty-state">아직 등록된 사진이 없습니다.</p>';
+      return;
+    }
+    allPhotos = photos;
+    populateYearOptions();
+    renderPhotos();
+  }
+
+  document.querySelectorAll('.dept-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.dept-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentDept = btn.dataset.dept;
+      renderPhotos();
+    });
+  });
+  document.getElementById('year-select').addEventListener('change', renderPhotos);
+
   loadPhotos();
 </script>
 
