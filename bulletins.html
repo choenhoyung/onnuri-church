@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>교회주보 - 청주 온누리감리교회</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">청주 온누리감리교회</div>
+  <nav>
+    <a href="index.html#worship">예배안내</a>
+    <a href="index.html#pastor">담임목사</a>
+    <a href="index.html#about">교회소개</a>
+    <a href="index.html#location">오시는길</a>
+    <a href="gallery.html">사진갤러리</a>
+    <a href="bulletins.html" class="active">교회주보</a>
+  </nav>
+</header>
+
+<div class="page-hero">
+  <h1>교회주보</h1>
+  <p>매주 발행되는 교회 소식과 말씀을 확인하세요</p>
+</div>
+
+<section>
+  <div class="bulletin-list" id="bulletin-list">
+    <p class="empty-state">주보를 불러오는 중입니다...</p>
+  </div>
+</section>
+
+<footer>
+  <strong>청주 온누리감리교회</strong><br>
+  충북 청주시 서원구 성봉로 194 (개신동) · Tel. 043-265-1825, 266-1825<br>
+  © 2026 Onnuri Methodist Church. All rights reserved.<br>
+  <a class="admin-link" href="admin/">관리자</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-config.js"></script>
+<script>
+  function formatDate(d) {
+    const date = new Date(d);
+    return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}`;
+  }
+  async function loadBulletins() {
+    const list = document.getElementById('bulletin-list');
+    const { data: bulletins, error } = await sb.from('bulletins').select('*').order('bulletin_date', { ascending: false });
+    if (error || !bulletins || bulletins.length === 0) {
+      list.innerHTML = '<p class="empty-state">아직 등록된 주보가 없습니다.</p>';
+      return;
+    }
+    list.innerHTML = bulletins.map(b => `
+      <div class="bulletin-item">
+        <div class="date">${formatDate(b.bulletin_date)}</div>
+        <h3>${b.title}</h3>
+        ${b.description ? `<p>${b.description}</p>` : ''}
+        ${b.file_url ? `<a class="file-link" href="${b.file_url}" target="_blank" rel="noopener">주보 파일 보기 →</a>` : ''}
+      </div>
+    `).join('');
+  }
+  loadBulletins();
+</script>
+
+</body>
+</html>

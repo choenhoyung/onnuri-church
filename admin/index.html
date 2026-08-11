@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 - 청주 온누리감리교회</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body class="admin-body">
+
+<div id="login-view" class="login-box">
+  <h1>관리자 로그인</h1>
+  <div class="field">
+    <label>이메일</label>
+    <input type="email" id="login-email" autocomplete="username">
+  </div>
+  <div class="field">
+    <label>비밀번호</label>
+    <input type="password" id="login-password" autocomplete="current-password">
+  </div>
+  <button class="btn gold" style="width:100%" id="login-btn">로그인</button>
+  <p class="error-msg" id="login-error"></p>
+</div>
+
+<div id="dashboard-view" class="admin-shell" style="display:none">
+  <div class="top-bar">
+    <h1>관리자 페이지</h1>
+    <button class="btn small" id="logout-btn">로그아웃</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="home">홈페이지 문구</button>
+    <button class="tab-btn" data-tab="gallery">사진 갤러리</button>
+    <button class="tab-btn" data-tab="bulletins">주보 게시판</button>
+  </div>
+
+  <!-- 홈페이지 문구 -->
+  <div class="tab-panel" id="tab-home">
+    <div class="admin-panel">
+      <h2>기본 문구</h2>
+      <div class="form-grid" id="settings-form">
+        <div class="field"><label>대표 문구 (제목)</label><input id="s-hero_title"></div>
+        <div class="field"><label>표어(슬로건)</label><input id="s-hero_verse"></div>
+        <div class="field"><label>표어 출처</label><input id="s-hero_ref"></div>
+        <div class="field"><label>담임목사 이름</label><input id="s-pastor_name"></div>
+        <div class="field"><label>주소</label><input id="s-address"></div>
+        <div class="field"><label>전화번호</label><input id="s-phone"></div>
+        <div class="field"><label>설립일</label><input id="s-founded_date"></div>
+      </div>
+      <div class="field"><label>담임목사 소개글</label><textarea id="s-pastor_bio"></textarea></div>
+      <div class="field"><label>WORSHIP 소개글</label><textarea id="s-about_worship"></textarea></div>
+      <div class="field"><label>LOVE 소개글</label><textarea id="s-about_love"></textarea></div>
+      <div class="field"><label>BIBLE 소개글</label><textarea id="s-about_bible"></textarea></div>
+      <button class="btn gold" id="save-settings-btn">문구 저장</button>
+      <p class="error-msg" id="settings-msg"></p>
+    </div>
+
+    <div class="admin-panel">
+      <h2>예배시간</h2>
+      <div class="row-list" id="worship-list"></div>
+      <h2 style="margin-top:2rem;font-size:1.05rem">새 예배시간 추가</h2>
+      <div class="form-grid">
+        <div class="field"><label>이름</label><input id="w-name" placeholder="예: 주일예배 1부"></div>
+        <div class="field"><label>시간</label><input id="w-time" placeholder="예: 오전 9:00"></div>
+        <div class="field"><label>요일</label><input id="w-day" placeholder="예: 주일(일요일)"></div>
+        <div class="field"><label>정렬순서</label><input id="w-sort_order" type="number" value="0"></div>
+      </div>
+      <button class="btn gold" id="add-worship-btn">추가</button>
+    </div>
+  </div>
+
+  <!-- 사진 갤러리 -->
+  <div class="tab-panel" id="tab-gallery" style="display:none">
+    <div class="admin-panel">
+      <h2>사진 업로드</h2>
+      <div class="field"><label>사진 파일</label><input type="file" id="photo-file" accept="image/*"></div>
+      <div class="field"><label>설명(선택)</label><input id="photo-caption" placeholder="예: 2026 여름 수련회"></div>
+      <button class="btn gold" id="upload-photo-btn">업로드</button>
+      <p class="error-msg" id="photo-msg"></p>
+      <div class="row-list" id="photo-list" style="margin-top:2rem"></div>
+    </div>
+  </div>
+
+  <!-- 주보 게시판 -->
+  <div class="tab-panel" id="tab-bulletins" style="display:none">
+    <div class="admin-panel">
+      <h2>주보 추가</h2>
+      <div class="form-grid">
+        <div class="field"><label>제목</label><input id="b-title" placeholder="예: 2026년 8월 9일 주보"></div>
+        <div class="field"><label>날짜</label><input id="b-date" type="date"></div>
+      </div>
+      <div class="field"><label>설명(선택)</label><textarea id="b-description" placeholder="본문 요약이나 말씀 본문 등"></textarea></div>
+      <div class="field"><label>파일(선택, 이미지 또는 PDF)</label><input type="file" id="b-file" accept="image/*,application/pdf"></div>
+      <button class="btn gold" id="add-bulletin-btn">추가</button>
+      <p class="error-msg" id="bulletin-msg"></p>
+      <div class="row-list" id="bulletin-admin-list" style="margin-top:2rem"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../supabase-config.js"></script>
+<script>
+  const loginView = document.getElementById('login-view');
+  const dashboardView = document.getElementById('dashboard-view');
+
+  function pathFromPublicUrl(url, bucket) {
+    const marker = `/object/public/${bucket}/`;
+    const idx = url.indexOf(marker);
+    return idx >= 0 ? decodeURIComponent(url.slice(idx + marker.length)) : null;
+  }
+
+  async function checkSession() {
+    const { data } = await sb.auth.getSession();
+    if (data.session) {
+      loginView.style.display = 'none';
+      dashboardView.style.display = 'block';
+      loadSettings();
+      loadWorshipTimes();
+      loadPhotos();
+      loadBulletins();
+    } else {
+      loginView.style.display = 'block';
+      dashboardView.style.display = 'none';
+    }
+  }
+
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    errorEl.textContent = '';
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      errorEl.textContent = '로그인 실패: 이메일 또는 비밀번호를 확인해주세요.';
+      return;
+    }
+    checkSession();
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await sb.auth.signOut();
+    checkSession();
+  });
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
+    });
+  });
+
+  // ---- 홈페이지 문구 ----
+  const settingsFields = ['hero_title','hero_verse','hero_ref','pastor_name','pastor_bio','address','phone','founded_date','about_worship','about_love','about_bible'];
+
+  async function loadSettings() {
+    const { data } = await sb.from('site_settings').select('*').eq('id', 1).single();
+    if (!data) return;
+    settingsFields.forEach(f => {
+      const el = document.getElementById('s-' + f);
+      if (el) el.value = data[f] || '';
+    });
+  }
+
+  document.getElementById('save-settings-btn').addEventListener('click', async () => {
+    const update = {};
+    settingsFields.forEach(f => {
+      const el = document.getElementById('s-' + f);
+      if (el) update[f] = el.value;
+    });
+    const msg = document.getElementById('settings-msg');
+    const { error } = await sb.from('site_settings').update(update).eq('id', 1);
+    msg.style.color = error ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = error ? '저장 실패: ' + error.message : '저장되었습니다.';
+  });
+
+  // ---- 예배시간 ----
+  async function loadWorshipTimes() {
+    const list = document.getElementById('worship-list');
+    const { data } = await sb.from('worship_times').select('*').order('sort_order');
+    if (!data || data.length === 0) {
+      list.innerHTML = '<p class="hint">등록된 예배시간이 없습니다.</p>';
+      return;
+    }
+    list.innerHTML = data.map(t => `
+      <div class="row-item" data-id="${t.id}">
+        <input class="w-edit-name" value="${t.name}" style="flex:1;min-width:120px">
+        <input class="w-edit-time" value="${t.time}" style="flex:1;min-width:100px">
+        <input class="w-edit-day" value="${t.day}" style="flex:1;min-width:120px">
+        <input class="w-edit-sort" type="number" value="${t.sort_order}" style="width:70px">
+        <div class="row-actions">
+          <button class="btn small" onclick="saveWorshipRow(${t.id}, this)">저장</button>
+          <button class="btn small danger" onclick="deleteWorshipRow(${t.id})">삭제</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.saveWorshipRow = async (id, btn) => {
+    const row = btn.closest('.row-item');
+    const update = {
+      name: row.querySelector('.w-edit-name').value,
+      time: row.querySelector('.w-edit-time').value,
+      day: row.querySelector('.w-edit-day').value,
+      sort_order: Number(row.querySelector('.w-edit-sort').value) || 0
+    };
+    await sb.from('worship_times').update(update).eq('id', id);
+    loadWorshipTimes();
+  };
+
+  window.deleteWorshipRow = async (id) => {
+    if (!confirm('이 예배시간을 삭제할까요?')) return;
+    await sb.from('worship_times').delete().eq('id', id);
+    loadWorshipTimes();
+  };
+
+  document.getElementById('add-worship-btn').addEventListener('click', async () => {
+    const name = document.getElementById('w-name').value.trim();
+    const time = document.getElementById('w-time').value.trim();
+    const day = document.getElementById('w-day').value.trim();
+    const sort_order = Number(document.getElementById('w-sort_order').value) || 0;
+    if (!name || !time || !day) return;
+    await sb.from('worship_times').insert({ name, time, day, sort_order });
+    document.getElementById('w-name').value = '';
+    document.getElementById('w-time').value = '';
+    document.getElementById('w-day').value = '';
+    document.getElementById('w-sort_order').value = 0;
+    loadWorshipTimes();
+  });
+
+  // ---- 사진 갤러리 ----
+  async function loadPhotos() {
+    const list = document.getElementById('photo-list');
+    const { data } = await sb.from('photos').select('*').order('created_at', { ascending: false });
+    if (!data || data.length === 0) {
+      list.innerHTML = '<p class="hint">등록된 사진이 없습니다.</p>';
+      return;
+    }
+    list.innerHTML = data.map(p => `
+      <div class="row-item" data-id="${p.id}">
+        <img class="thumb" src="${p.url}">
+        <input class="p-edit-caption" value="${p.caption || ''}" placeholder="설명" style="flex:1;min-width:150px">
+        <div class="row-actions">
+          <button class="btn small" onclick="savePhotoCaption(${p.id}, this)">저장</button>
+          <button class="btn small danger" onclick="deletePhoto(${p.id}, '${p.url}')">삭제</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.savePhotoCaption = async (id, btn) => {
+    const row = btn.closest('.row-item');
+    const caption = row.querySelector('.p-edit-caption').value;
+    await sb.from('photos').update({ caption }).eq('id', id);
+    loadPhotos();
+  };
+
+  window.deletePhoto = async (id, url) => {
+    if (!confirm('이 사진을 삭제할까요?')) return;
+    const path = pathFromPublicUrl(url, 'gallery-photos');
+    if (path) await sb.storage.from('gallery-photos').remove([path]);
+    await sb.from('photos').delete().eq('id', id);
+    loadPhotos();
+  };
+
+  document.getElementById('upload-photo-btn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('photo-file');
+    const caption = document.getElementById('photo-caption').value.trim();
+    const msg = document.getElementById('photo-msg');
+    const file = fileInput.files[0];
+    if (!file) { msg.textContent = '사진 파일을 선택해주세요.'; return; }
+    const path = `${Date.now()}-${file.name}`;
+    const { error: uploadError } = await sb.storage.from('gallery-photos').upload(path, file);
+    if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
+    const { data: pub } = sb.storage.from('gallery-photos').getPublicUrl(path);
+    const { error: insertError } = await sb.from('photos').insert({ url: pub.publicUrl, caption });
+    msg.style.color = insertError ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = insertError ? '저장 실패: ' + insertError.message : '업로드되었습니다.';
+    fileInput.value = '';
+    document.getElementById('photo-caption').value = '';
+    loadPhotos();
+  });
+
+  // ---- 주보 게시판 ----
+  async function loadBulletins() {
+    const list = document.getElementById('bulletin-admin-list');
+    const { data } = await sb.from('bulletins').select('*').order('bulletin_date', { ascending: false });
+    if (!data || data.length === 0) {
+      list.innerHTML = '<p class="hint">등록된 주보가 없습니다.</p>';
+      return;
+    }
+    list.innerHTML = data.map(b => `
+      <div class="row-item" data-id="${b.id}" style="align-items:flex-start">
+        <div style="flex:2;min-width:200px;display:flex;flex-direction:column;gap:0.4rem">
+          <input class="bu-edit-title" value="${b.title}">
+          <input class="bu-edit-date" type="date" value="${b.bulletin_date}">
+          <textarea class="bu-edit-desc" style="min-height:50px">${b.description || ''}</textarea>
+          ${b.file_url ? `<a class="file-link" href="${b.file_url}" target="_blank" rel="noopener">현재 첨부파일 보기</a>` : ''}
+        </div>
+        <div class="row-actions">
+          <button class="btn small" onclick="saveBulletinRow(${b.id}, this)">저장</button>
+          <button class="btn small danger" onclick="deleteBulletin(${b.id}, ${b.file_url ? `'${b.file_url}'` : 'null'})">삭제</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.saveBulletinRow = async (id, btn) => {
+    const row = btn.closest('.row-item');
+    const update = {
+      title: row.querySelector('.bu-edit-title').value,
+      bulletin_date: row.querySelector('.bu-edit-date').value,
+      description: row.querySelector('.bu-edit-desc').value
+    };
+    await sb.from('bulletins').update(update).eq('id', id);
+    loadBulletins();
+  };
+
+  window.deleteBulletin = async (id, fileUrl) => {
+    if (!confirm('이 주보를 삭제할까요?')) return;
+    if (fileUrl) {
+      const path = pathFromPublicUrl(fileUrl, 'bulletin-files');
+      if (path) await sb.storage.from('bulletin-files').remove([path]);
+    }
+    await sb.from('bulletins').delete().eq('id', id);
+    loadBulletins();
+  };
+
+  document.getElementById('add-bulletin-btn').addEventListener('click', async () => {
+    const title = document.getElementById('b-title').value.trim();
+    const bulletin_date = document.getElementById('b-date').value;
+    const description = document.getElementById('b-description').value.trim();
+    const fileInput = document.getElementById('b-file');
+    const msg = document.getElementById('bulletin-msg');
+    if (!title || !bulletin_date) { msg.textContent = '제목과 날짜는 필수입니다.'; return; }
+
+    let file_url = null;
+    const file = fileInput.files[0];
+    if (file) {
+      const path = `${Date.now()}-${file.name}`;
+      const { error: uploadError } = await sb.storage.from('bulletin-files').upload(path, file);
+      if (uploadError) { msg.textContent = '파일 업로드 실패: ' + uploadError.message; return; }
+      const { data: pub } = sb.storage.from('bulletin-files').getPublicUrl(path);
+      file_url = pub.publicUrl;
+    }
+
+    const { error: insertError } = await sb.from('bulletins').insert({ title, bulletin_date, description, file_url });
+    msg.style.color = insertError ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = insertError ? '저장 실패: ' + insertError.message : '주보가 등록되었습니다.';
+    document.getElementById('b-title').value = '';
+    document.getElementById('b-date').value = '';
+    document.getElementById('b-description').value = '';
+    fileInput.value = '';
+    loadBulletins();
+  });
+
+  checkSession();
+</script>
+
+</body>
+</html>

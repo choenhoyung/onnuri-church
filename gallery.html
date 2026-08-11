@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사진갤러리 - 청주 온누리감리교회</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">청주 온누리감리교회</div>
+  <nav>
+    <a href="index.html#worship">예배안내</a>
+    <a href="index.html#pastor">담임목사</a>
+    <a href="index.html#about">교회소개</a>
+    <a href="index.html#location">오시는길</a>
+    <a href="gallery.html" class="active">사진갤러리</a>
+    <a href="bulletins.html">교회주보</a>
+  </nav>
+</header>
+
+<div class="page-hero">
+  <h1>사진갤러리</h1>
+  <p>교회의 소중한 순간들을 함께 나눠요</p>
+</div>
+
+<section>
+  <div class="gallery-grid" id="gallery-grid">
+    <p class="empty-state">사진을 불러오는 중입니다...</p>
+  </div>
+</section>
+
+<footer>
+  <strong>청주 온누리감리교회</strong><br>
+  충북 청주시 서원구 성봉로 194 (개신동) · Tel. 043-265-1825, 266-1825<br>
+  © 2026 Onnuri Methodist Church. All rights reserved.<br>
+  <a class="admin-link" href="admin/">관리자</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-config.js"></script>
+<script>
+  async function loadPhotos() {
+    const grid = document.getElementById('gallery-grid');
+    const { data: photos, error } = await sb.from('photos').select('*').order('sort_order').order('created_at', { ascending: false });
+    if (error || !photos || photos.length === 0) {
+      grid.innerHTML = '<p class="empty-state">아직 등록된 사진이 없습니다.</p>';
+      return;
+    }
+    grid.innerHTML = photos.map(p => `
+      <figure>
+        <img src="${p.url}" alt="${p.caption || '교회 사진'}" loading="lazy">
+        ${p.caption ? `<figcaption>${p.caption}</figcaption>` : ''}
+      </figure>
+    `).join('');
+  }
+  loadPhotos();
+</script>
+
+</body>
+</html>
