@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Template 1 — Modern & Minimalist</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Noto Sans KR', sans-serif; }
+  .serif { font-family: 'Noto Serif KR', serif; }
+  .hero-bg {
+    background: linear-gradient(135deg, #0f2942 0%, #1c4a5e 45%, #d98e3a 100%);
+  }
+</style>
+</head>
+<body class="bg-white text-slate-800">
+
+<!-- Header: logo left, nav right -->
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-100">
+  <div class="max-w-7xl mx-auto flex items-center justify-between px-5 py-4">
+    <div class="flex items-center gap-2 font-extrabold text-lg serif">
+      <span class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm">✝</span>
+      [Church Logo]
+    </div>
+    <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+      <a href="#" class="hover:text-slate-900">교회안내</a>
+      <a href="#" class="hover:text-slate-900">온라인예배</a>
+      <a href="#" class="hover:text-slate-900">교회소식</a>
+      <a href="#" class="hover:text-slate-900">교육/양육</a>
+      <a href="#" class="hover:text-slate-900">오시는길</a>
+    </nav>
+    <button id="menu-btn" class="md:hidden flex flex-col gap-1.5 w-7">
+      <span class="h-0.5 bg-slate-800"></span><span class="h-0.5 bg-slate-800"></span><span class="h-0.5 bg-slate-800"></span>
+    </button>
+  </div>
+  <nav id="mobile-nav" class="hidden md:hidden flex-col px-5 pb-4 gap-3 text-sm font-semibold text-slate-600">
+    <a href="#">교회안내</a><a href="#">온라인예배</a><a href="#">교회소식</a><a href="#">교육/양육</a><a href="#">오시는길</a>
+  </nav>
+</header>
+
+<!-- Hero: full-width bg with overlaid typography -->
+<section class="hero-bg text-white relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-5 py-28 md:py-40 relative z-10">
+    <span class="inline-block px-3 py-1 rounded-full bg-white/15 text-xs font-bold tracking-wide mb-5">● LIVE 생방송 안내</span>
+    <h1 class="serif text-4xl md:text-6xl font-extrabold leading-tight max-w-2xl">[Church Slogan / Mission Statement]</h1>
+    <p class="mt-5 text-white/80 max-w-lg text-base md:text-lg">[짧은 소개 문구가 들어가는 자리입니다. 교회의 비전과 환영 인사를 담아주세요.]</p>
+    <div class="mt-8 flex gap-3">
+      <a href="#" class="px-6 py-3 rounded-full bg-white text-slate-900 font-bold text-sm">예배 시간 보기</a>
+      <a href="#" class="px-6 py-3 rounded-full border border-white/40 text-white font-bold text-sm">온라인 예배 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- Icon quick menu grid -->
+<section class="max-w-7xl mx-auto px-5 -mt-10 md:-mt-14 relative z-20 pb-20">
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <a href="#" class="bg-white rounded-2xl shadow-lg shadow-slate-200 p-6 flex flex-col items-center gap-3 text-center hover:-translate-y-1 transition">
+      <span class="text-3xl">🙏</span><span class="font-bold text-sm">예배안내</span>
+    </a>
+    <a href="#" class="bg-white rounded-2xl shadow-lg shadow-slate-200 p-6 flex flex-col items-center gap-3 text-center hover:-translate-y-1 transition">
+      <span class="text-3xl">📖</span><span class="font-bold text-sm">[Sermon Title]</span>
+    </a>
+    <a href="#" class="bg-white rounded-2xl shadow-lg shadow-slate-200 p-6 flex flex-col items-center gap-3 text-center hover:-translate-y-1 transition">
+      <span class="text-3xl">📰</span><span class="font-bold text-sm">교회주보</span>
+    </a>
+    <a href="#" class="bg-white rounded-2xl shadow-lg shadow-slate-200 p-6 flex flex-col items-center gap-3 text-center hover:-translate-y-1 transition">
+      <span class="text-3xl">📍</span><span class="font-bold text-sm">오시는길</span>
+    </a>
+    <a href="#" class="bg-white rounded-2xl shadow-lg shadow-slate-200 p-6 flex flex-col items-center gap-3 text-center hover:-translate-y-1 transition">
+      <span class="text-3xl">💳</span><span class="font-bold text-sm">헌금안내</span>
+    </a>
+  </div>
+</section>
+
+<footer class="bg-slate-900 text-slate-400 text-center text-sm py-10">
+  [Church Logo] · [주소] · [전화번호]<br>
+  © [Year] [Church Name]. All rights reserved.
+</footer>
+
+<script>
+  document.getElementById('menu-btn').addEventListener('click', () => {
+    const nav = document.getElementById('mobile-nav');
+    nav.classList.toggle('hidden');
+    nav.classList.toggle('flex');
+  });
+</script>
+</body>
+</html>
