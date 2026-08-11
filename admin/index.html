@@ -112,6 +112,13 @@
     return idx >= 0 ? decodeURIComponent(url.slice(idx + marker.length)) : null;
   }
 
+  function safeFileName(file) {
+    const dot = file.name.lastIndexOf('.');
+    const ext = dot >= 0 ? file.name.slice(dot + 1).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() : '';
+    const rand = Math.random().toString(36).slice(2, 8);
+    return `${Date.now()}-${rand}${ext ? '.' + ext : ''}`;
+  }
+
   async function checkSession() {
     const { data } = await sb.auth.getSession();
     if (data.session) {
@@ -273,7 +280,7 @@
     const msg = document.getElementById('photo-msg');
     const file = fileInput.files[0];
     if (!file) { msg.textContent = '사진 파일을 선택해주세요.'; return; }
-    const path = `${Date.now()}-${file.name}`;
+    const path = safeFileName(file);
     const { error: uploadError } = await sb.storage.from('gallery-photos').upload(path, file);
     if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
     const { data: pub } = sb.storage.from('gallery-photos').getPublicUrl(path);
@@ -341,7 +348,7 @@
     let file_url = null;
     const file = fileInput.files[0];
     if (file) {
-      const path = `${Date.now()}-${file.name}`;
+      const path = safeFileName(file);
       const { error: uploadError } = await sb.storage.from('bulletin-files').upload(path, file);
       if (uploadError) { msg.textContent = '파일 업로드 실패: ' + uploadError.message; return; }
       const { data: pub } = sb.storage.from('bulletin-files').getPublicUrl(path);
