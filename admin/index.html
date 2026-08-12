@@ -861,7 +861,8 @@
   }
 
   function renderUrlPanel(panel, input) {
-    const q = input.value.trim().toLowerCase();
+    let q = input.value.trim().toLowerCase();
+    if (q === '#') q = '';
     const options = getUrlOptions().filter(o =>
       !q || o.label.toLowerCase().includes(q) || o.url.toLowerCase().includes(q)
     );
@@ -929,7 +930,7 @@
   window.addSubmenuItem = (i) => {
     syncMenuStateFromDOM();
     menuState[i].submenus = menuState[i].submenus || [];
-    menuState[i].submenus.push({ label: '새 서브메뉴', url: '#' });
+    menuState[i].submenus.push({ label: '새 서브메뉴', url: '' });
     renderMenuAdmin();
   };
   window.moveSubmenuItem = (i, j, dir) => {
@@ -948,7 +949,7 @@
 
   document.getElementById('add-menu-item-btn').addEventListener('click', () => {
     syncMenuStateFromDOM();
-    menuState.push({ title: '새 메뉴', url: '#', submenus: [] });
+    menuState.push({ title: '새 메뉴', url: '', submenus: [] });
     renderMenuAdmin();
   });
 
