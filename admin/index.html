@@ -143,6 +143,16 @@
         <button class="btn gold" id="save-menu-btn">전체 저장</button>
       </div>
       <p class="error-msg" id="menu-msg"></p>
+      <datalist id="menu-url-options">
+        <option value="index.html" label="홈페이지"></option>
+        <option value="about.html" label="교회소개 페이지"></option>
+        <option value="schedule.html" label="교회 일정"></option>
+        <option value="gallery.html" label="앨범"></option>
+        <option value="bulletins.html" label="교회주보"></option>
+        <option value="index.html#pastor" label="담임목사 인사(홈 화면 섹션)"></option>
+        <option value="index.html#worship" label="예배시간 안내(홈 화면 섹션)"></option>
+        <option value="index.html#location" label="오시는 길(홈 화면 섹션)"></option>
+      </datalist>
     </div>
   </div>
 
@@ -804,7 +814,7 @@
       <div class="menu-item-block" data-index="${i}">
         <div class="menu-item-header">
           <input class="menu-title-input" value="${escapeAttr(item.title)}" placeholder="메뉴 이름">
-          <input class="menu-url-input" value="${escapeAttr(item.url || '')}" placeholder="연결 주소 (예: index.html#about)">
+          <input class="menu-url-input" list="menu-url-options" value="${escapeAttr(item.url || '')}" placeholder="연결 주소 (클릭하면 목록에서 선택 가능)">
           <div class="row-actions">
             <button class="btn small" onclick="moveMenuItem(${i}, -1)">▲</button>
             <button class="btn small" onclick="moveMenuItem(${i}, 1)">▼</button>
@@ -815,7 +825,7 @@
           ${(item.submenus || []).map((sub, j) => `
             <div class="submenu-row" data-index="${j}">
               <input class="submenu-label-input" value="${escapeAttr(sub.label)}" placeholder="서브메뉴 이름">
-              <input class="submenu-url-input" value="${escapeAttr(sub.url || '')}" placeholder="연결 주소">
+              <input class="submenu-url-input" list="menu-url-options" value="${escapeAttr(sub.url || '')}" placeholder="연결 주소 (클릭하면 목록에서 선택 가능)">
               <div class="row-actions">
                 <button class="btn small" onclick="moveSubmenuItem(${i}, ${j}, -1)">▲</button>
                 <button class="btn small" onclick="moveSubmenuItem(${i}, ${j}, 1)">▼</button>
@@ -1114,6 +1124,15 @@
     const { data } = await sb.from('departments').select('*').order('sort_order');
     departmentsData = data || [];
     renderDepartments();
+    const datalist = document.getElementById('menu-url-options');
+    datalist.querySelectorAll('option[data-department]').forEach(o => o.remove());
+    departmentsData.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = 'department.html?slug=' + encodeURIComponent(d.slug);
+      opt.label = d.name + ' 부서 소개';
+      opt.dataset.department = '1';
+      datalist.appendChild(opt);
+    });
   }
 
   function renderDepartments() {
