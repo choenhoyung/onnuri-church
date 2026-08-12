@@ -257,6 +257,7 @@ p.section-sub {
 }
 @media (max-width: 760px) { .location { grid-template-columns: 1fr; } }
 .location iframe { width: 100%; min-height: 320px; border: 0; border-radius: 12px; }
+.kakao-map-embed { width: 100%; min-height: 320px; height: 100%; border-radius: 12px; background: #eee; }
 .map-link-card {
   display: flex;
   flex-direction: column;

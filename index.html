@@ -207,12 +207,14 @@
   <h2 class="section-title">오시는 길</h2>
   <p class="section-sub">언제든 편안하게 찾아와 주세요</p>
   <div class="location">
-    <a class="map-link-card reveal" href="https://naver.me/5OtRNLa4" target="_blank" rel="noopener">
-      <div class="map-link-icon">📍</div>
-      <div class="map-link-title">네이버 지도에서 보기</div>
-      <div class="map-link-sub">청주 온누리감리교회 위치를 지도 앱에서 확인하고<br>길찾기를 바로 이용해보세요</div>
-      <span class="map-link-btn">네이버지도 열기 →</span>
-    </a>
+    <div id="map-slot" class="reveal">
+      <a class="map-link-card" href="https://naver.me/5OtRNLa4" target="_blank" rel="noopener">
+        <div class="map-link-icon">📍</div>
+        <div class="map-link-title">네이버 지도에서 보기</div>
+        <div class="map-link-sub">청주 온누리감리교회 위치를 지도 앱에서 확인하고<br>길찾기를 바로 이용해보세요</div>
+        <span class="map-link-btn">네이버지도 열기 →</span>
+      </a>
+    </div>
     <div class="info reveal">
       <dl>
         <dt>주소</dt>
@@ -223,6 +225,8 @@
         <dd id="info-pastor">변종태 목사</dd>
         <dt>설립</dt>
         <dd id="info-founded">1981년 3월 14일</dd>
+        <dt>길찾기</dt>
+        <dd><a href="https://naver.me/5OtRNLa4" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700">네이버지도로 길찾기 →</a></dd>
       </dl>
     </div>
   </div>
@@ -323,8 +327,37 @@
     document.querySelectorAll('.reveal:not(.visible)').forEach(el => io.observe(el));
   }
 
+  async function loadKakaoMap() {
+    const slot = document.getElementById('map-slot');
+    const fallbackHtml = slot.innerHTML;
+    const { data } = await sb.from('site_settings').select('kakao_map_key, address').eq('id', 1).single();
+    const key = data && data.kakao_map_key;
+    if (!key) return;
+    const address = (data && data.address) || '충북 청주시 서원구 성봉로 194 (개신동)';
+    slot.innerHTML = '<div id="kakao-map" class="kakao-map-embed"></div>';
+    const script = document.createElement('script');
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&autoload=false&libraries=services`;
+    script.onload = () => {
+      try {
+        kakao.maps.load(() => {
+          const geocoder = new kakao.maps.services.Geocoder();
+          geocoder.addressSearch(address, (result, status) => {
+            const coords = (status === kakao.maps.services.Status.OK && result[0])
+              ? new kakao.maps.LatLng(result[0].y, result[0].x)
+              : new kakao.maps.LatLng(36.6135, 127.4780);
+            const map = new kakao.maps.Map(document.getElementById('kakao-map'), { center: coords, level: 4 });
+            new kakao.maps.Marker({ map, position: coords });
+          });
+        });
+      } catch (e) { slot.innerHTML = fallbackHtml; }
+    };
+    script.onerror = () => { slot.innerHTML = fallbackHtml; };
+    document.body.appendChild(script);
+  }
+
   loadContent();
   loadSermons().then(initScrollReveal);
+  loadKakaoMap();
   initScrollReveal();
   initSideTabs();
 </script>

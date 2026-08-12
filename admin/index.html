@@ -188,6 +188,10 @@
         <input type="file" id="theme-pastor-photo-file" accept="image/*">
       </div>
       <div id="theme-pastor-photo-preview" style="margin-top:0.8rem"></div>
+      <div class="field" style="margin-top:1.2rem">
+        <label>카카오맵 JavaScript 키 (선택, 입력하면 오시는 길에 실제 지도가 표시됩니다)</label>
+        <input id="theme-kakao-key" placeholder="예: 184dc42d39914c7ba975f2fac6347ff2">
+      </div>
       <div style="margin-top:1.4rem;display:flex;gap:0.6rem;align-items:center">
         <button class="btn" id="reset-theme-btn">기본값으로 되돌리기</button>
         <button class="btn gold" id="save-theme-btn">저장</button>
@@ -823,12 +827,13 @@
   }
 
   async function loadTheme() {
-    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url').eq('id', 1).single();
+    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url, kakao_map_key').eq('id', 1).single();
     if (!data) return;
     document.getElementById('theme-banner-bg').value = data.banner_bg_color || '#1c2b3a';
     document.getElementById('theme-banner-text').value = data.banner_text_color || '#ffffff';
     document.getElementById('theme-font').value = data.font_family || '';
     document.getElementById('theme-hero-style').value = data.hero_style || '';
+    document.getElementById('theme-kakao-key').value = data.kakao_map_key || '';
 
     currentHeroBgImage = data.hero_bg_image || '';
     const heroPreview = document.getElementById('theme-hero-bg-preview');
@@ -888,7 +893,8 @@
       pastor_photo_url = pub.publicUrl;
     }
 
-    const { error } = await sb.from('site_settings').update({ banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url }).eq('id', 1);
+    const kakao_map_key = document.getElementById('theme-kakao-key').value.trim();
+    const { error } = await sb.from('site_settings').update({ banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url, kakao_map_key }).eq('id', 1);
     msg.style.color = error ? '#b23b3b' : '#2b7a3b';
     msg.textContent = error ? '저장 실패: ' + error.message : '저장되었습니다. 실제 사이트에 바로 반영됩니다.';
     if (!error) loadTheme();
