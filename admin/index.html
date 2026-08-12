@@ -117,6 +117,16 @@
       <p class="error-msg" id="bulletin-msg"></p>
       <div class="row-list" id="bulletin-admin-list" style="margin-top:2rem"></div>
     </div>
+
+    <div class="admin-panel">
+      <h2>여러 장 한번에 올리기 (OCR 자동인식)</h2>
+      <p class="hint">주보 사진을 여러 장 선택하면 날짜/제목을 자동으로 읽어 표로 보여드립니다. 등록 전에 직접 확인하고 수정할 수 있어요. (OCR은 인쇄 상태에 따라 부정확할 수 있습니다)</p>
+      <div class="field" style="margin-top:1rem"><label>주보 사진 여러 장 선택</label><input type="file" id="bulk-bulletin-files" accept="image/*" multiple></div>
+      <button class="btn" id="run-bulk-ocr-btn">OCR로 분석하기</button>
+      <p class="error-msg" id="bulk-bulletin-msg"></p>
+      <div id="bulk-bulletin-preview" class="row-list" style="margin-top:1.2rem"></div>
+      <button class="btn gold" id="submit-bulk-bulletins-btn" style="margin-top:1rem;display:none">전체 등록</button>
+    </div>
   </div>
 
   <!-- 메뉴 관리 -->
@@ -236,6 +246,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="../supabase-config.js"></script>
 <script>
   const loginView = document.getElementById('login-view');
@@ -252,6 +263,41 @@
     const ext = dot >= 0 ? file.name.slice(dot + 1).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() : '';
     const rand = Math.random().toString(36).slice(2, 8);
     return `${Date.now()}-${rand}${ext ? '.' + ext : ''}`;
+  }
+
+  function compressImage(file, maxDim, quality) {
+    maxDim = maxDim || 1600;
+    quality = quality || 0.8;
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/') || file.type === 'image/svg+xml' || file.type === 'image/gif') {
+        resolve(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width, height = img.height;
+          if (width > maxDim || height > maxDim) {
+            const scale = maxDim / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (!blob || blob.size >= file.size) { resolve(file); return; }
+            resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
   }
 
   const DEPARTMENTS = ['전체', '유치부', '초등부', '학생부', '청년부', '장년부'];
@@ -440,7 +486,7 @@
     for (let i = 0; i < files.length; i++) {
       msg.style.color = '#6b6b6b';
       msg.textContent = `업로드 중... (${i + 1}/${files.length})`;
-      const file = files[i];
+      const file = await compressImage(files[i]);
       const path = safeFileName(file);
       const { error: uploadError } = await sb.storage.from('gallery-photos').upload(path, file);
       if (uploadError) { failCount++; continue; }
@@ -517,8 +563,9 @@
     if (!title || !bulletin_date) { msg.textContent = '제목과 날짜는 필수입니다.'; return; }
 
     let file_url = null;
-    const file = fileInput.files[0];
-    if (file) {
+    const rawFile = fileInput.files[0];
+    if (rawFile) {
+      const file = await compressImage(rawFile);
       const path = safeFileName(file);
       const { error: uploadError } = await sb.storage.from('bulletin-files').upload(path, file);
       if (uploadError) { msg.textContent = '파일 업로드 실패: ' + uploadError.message; return; }
@@ -533,6 +580,123 @@
     document.getElementById('b-date').value = '';
     document.getElementById('b-description').value = '';
     fileInput.value = '';
+    loadBulletins();
+  });
+
+  // ---- 주보 일괄 업로드 (OCR) ----
+  let bulkBulletinRows = [];
+
+  function parseBulletinText(text) {
+    const dateMatch = text.match(/(\d{4})[.\-\s년]+\s*(\d{1,2})[.\-\s월]+\s*(\d{1,2})\s*일?/);
+    let bulletin_date = '';
+    let title = '';
+    if (dateMatch) {
+      const y = dateMatch[1];
+      const m = String(Number(dateMatch[2])).padStart(2, '0');
+      const d = String(Number(dateMatch[3])).padStart(2, '0');
+      bulletin_date = `${y}-${m}-${d}`;
+      title = `${y}년 ${Number(dateMatch[2])}월 ${Number(dateMatch[3])}일 주보`;
+    }
+    const passageMatch = text.match(/[가-힣]{2,6}\s?\d{1,3}\s*[:~,\-]\s*\d{1,3}(?:\s*[~,\-]\s*\d{1,3})?/);
+    const description = passageMatch ? `본문: ${passageMatch[0]}` : '';
+    return { bulletin_date, title, description };
+  }
+
+  function renderBulkPreview() {
+    const wrap = document.getElementById('bulk-bulletin-preview');
+    const submitBtn = document.getElementById('submit-bulk-bulletins-btn');
+    if (!bulkBulletinRows.length) {
+      wrap.innerHTML = '';
+      submitBtn.style.display = 'none';
+      return;
+    }
+    submitBtn.style.display = 'inline-block';
+    wrap.innerHTML = bulkBulletinRows.map((row, i) => `
+      <div class="row-item" data-index="${i}" style="align-items:flex-start">
+        <img class="thumb" src="${row.previewUrl}">
+        <div style="flex:2;min-width:200px;display:flex;flex-direction:column;gap:0.4rem">
+          <input class="bulk-title" value="${escapeAttr(row.title)}" placeholder="제목">
+          <input class="bulk-date" type="date" value="${row.bulletin_date}">
+          <textarea class="bulk-desc" style="min-height:50px">${escapeAttr(row.description)}</textarea>
+        </div>
+        <div class="row-actions">
+          <button class="btn small danger" onclick="removeBulkRow(${i})">제외</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.removeBulkRow = (i) => {
+    bulkBulletinRows.splice(i, 1);
+    renderBulkPreview();
+  };
+
+  document.getElementById('run-bulk-ocr-btn').addEventListener('click', async () => {
+    const files = Array.from(document.getElementById('bulk-bulletin-files').files);
+    const msg = document.getElementById('bulk-bulletin-msg');
+    if (!files.length) { msg.textContent = '파일을 선택해주세요.'; return; }
+    bulkBulletinRows = [];
+    for (let i = 0; i < files.length; i++) {
+      msg.style.color = '#6b6b6b';
+      msg.textContent = `OCR 분석 중... (${i + 1}/${files.length})`;
+      const file = files[i];
+      let text = '';
+      if (file.type.startsWith('image/')) {
+        try {
+          const result = await Tesseract.recognize(file, 'kor');
+          text = (result && result.data && result.data.text) || '';
+        } catch (e) { text = ''; }
+      }
+      const parsed = parseBulletinText(text);
+      bulkBulletinRows.push({
+        file,
+        previewUrl: URL.createObjectURL(file),
+        title: parsed.title || file.name.replace(/\.\w+$/, ''),
+        bulletin_date: parsed.bulletin_date || '',
+        description: parsed.description || ''
+      });
+    }
+    msg.style.color = '#2b7a3b';
+    msg.textContent = `${files.length}개 분석 완료. 아래에서 확인 후 등록해주세요. (날짜가 비어있으면 직접 입력해주세요)`;
+    renderBulkPreview();
+  });
+
+  document.getElementById('submit-bulk-bulletins-btn').addEventListener('click', async () => {
+    const msg = document.getElementById('bulk-bulletin-msg');
+    document.querySelectorAll('#bulk-bulletin-preview .row-item').forEach((el, i) => {
+      bulkBulletinRows[i].title = el.querySelector('.bulk-title').value;
+      bulkBulletinRows[i].bulletin_date = el.querySelector('.bulk-date').value;
+      bulkBulletinRows[i].description = el.querySelector('.bulk-desc').value;
+    });
+    if (bulkBulletinRows.some(r => !r.bulletin_date)) {
+      msg.style.color = '#b23b3b';
+      msg.textContent = '날짜가 비어있는 항목이 있습니다. 직접 입력해주세요.';
+      return;
+    }
+
+    let success = 0, fail = 0;
+    for (let i = 0; i < bulkBulletinRows.length; i++) {
+      msg.style.color = '#6b6b6b';
+      msg.textContent = `등록 중... (${i + 1}/${bulkBulletinRows.length})`;
+      const row = bulkBulletinRows[i];
+      try {
+        const compressed = await compressImage(row.file);
+        const path = safeFileName(compressed);
+        const { error: uploadError } = await sb.storage.from('bulletin-files').upload(path, compressed);
+        if (uploadError) throw uploadError;
+        const { data: pub } = sb.storage.from('bulletin-files').getPublicUrl(path);
+        const { error: insertError } = await sb.from('bulletins').insert({
+          title: row.title, bulletin_date: row.bulletin_date, description: row.description, file_url: pub.publicUrl
+        });
+        if (insertError) throw insertError;
+        success++;
+      } catch (e) { fail++; }
+    }
+    msg.style.color = fail ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = `${success}개 등록 완료` + (fail ? `, ${fail}개 실패` : '');
+    bulkBulletinRows = [];
+    renderBulkPreview();
+    document.getElementById('bulk-bulletin-files').value = '';
     loadBulletins();
   });
 
@@ -689,10 +853,11 @@
     let hero_bg_image = currentHeroBgImage;
     let pastor_photo_url = currentPastorPhoto;
 
-    const heroFile = document.getElementById('theme-hero-bg-file').files[0];
-    if (heroFile) {
-      if (!heroFile.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
-      if (heroFile.size > 8 * 1024 * 1024) { msg.textContent = '이미지 용량은 8MB 이하여야 합니다.'; return; }
+    const rawHeroFile = document.getElementById('theme-hero-bg-file').files[0];
+    if (rawHeroFile) {
+      if (!rawHeroFile.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
+      if (rawHeroFile.size > 8 * 1024 * 1024) { msg.textContent = '이미지 용량은 8MB 이하여야 합니다.'; return; }
+      const heroFile = await compressImage(rawHeroFile, 1920, 0.82);
       const path = safeFileName(heroFile);
       const { error: uploadError } = await sb.storage.from('hero-images').upload(path, heroFile);
       if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
@@ -700,10 +865,11 @@
       hero_bg_image = pub.publicUrl;
     }
 
-    const pastorFile = document.getElementById('theme-pastor-photo-file').files[0];
-    if (pastorFile) {
-      if (!pastorFile.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
-      if (pastorFile.size > 5 * 1024 * 1024) { msg.textContent = '이미지 용량은 5MB 이하여야 합니다.'; return; }
+    const rawPastorFile = document.getElementById('theme-pastor-photo-file').files[0];
+    if (rawPastorFile) {
+      if (!rawPastorFile.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
+      if (rawPastorFile.size > 5 * 1024 * 1024) { msg.textContent = '이미지 용량은 5MB 이하여야 합니다.'; return; }
+      const pastorFile = await compressImage(rawPastorFile, 800, 0.85);
       const path = safeFileName(pastorFile);
       const { error: uploadError } = await sb.storage.from('hero-images').upload(path, pastorFile);
       if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
@@ -847,10 +1013,11 @@
     const active = document.getElementById('popup-active').checked;
     let image_url = currentPopupImageUrl;
 
-    const file = fileInput.files[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
-      if (file.size > 5 * 1024 * 1024) { msg.textContent = '이미지 용량은 5MB 이하여야 합니다.'; return; }
+    const rawFile = fileInput.files[0];
+    if (rawFile) {
+      if (!rawFile.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
+      if (rawFile.size > 5 * 1024 * 1024) { msg.textContent = '이미지 용량은 5MB 이하여야 합니다.'; return; }
+      const file = await compressImage(rawFile);
       const path = safeFileName(file);
       const { error: uploadError } = await sb.storage.from('popup-images').upload(path, file);
       if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
