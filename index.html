@@ -13,6 +13,11 @@
     color: var(--banner-text);
     padding: 5rem 1.5rem 4rem;
   }
+  body.has-hero-photo .hero-pro {
+    background:
+      linear-gradient(180deg, rgba(10,16,26,0.55), rgba(10,16,26,0.8)),
+      var(--hero-bg-image) center/cover no-repeat;
+  }
   .hero-pro-inner {
     max-width: 1100px;
     margin: 0 auto;
@@ -105,7 +110,15 @@
   </div>
 </div>
 
-<div class="hero-pro">
+<nav class="side-tabs" id="side-tabs">
+  <a href="#worship" class="side-tab" data-target="worship"><span>예배</span><small>WORSHIP</small></a>
+  <a href="#pastor" class="side-tab" data-target="pastor"><span>목양</span><small>PASTOR</small></a>
+  <a href="#sermons" class="side-tab" data-target="sermons"><span>설교</span><small>SERMON</small></a>
+  <a href="#about" class="side-tab" data-target="about"><span>소개</span><small>ABOUT</small></a>
+  <a href="#location" class="side-tab" data-target="location"><span>오시는길</span><small>LOCATION</small></a>
+</nav>
+
+<div class="hero-pro" id="worship">
   <div class="hero-pro-inner">
     <div class="hero-pro-text">
       <span class="eyebrow">PRAISE THE LORD</span>
@@ -253,8 +266,24 @@
     `).join('');
   }
 
+  function initSideTabs() {
+    const tabs = [...document.querySelectorAll('.side-tab')];
+    const sections = tabs.map(t => document.getElementById(t.dataset.target)).filter(Boolean);
+    function onScroll() {
+      const visible = sections.filter(s => s.offsetParent !== null);
+      if (!visible.length) return;
+      let current = visible[0];
+      const scrollPos = window.scrollY + window.innerHeight * 0.35;
+      visible.forEach(sec => { if (sec.offsetTop <= scrollPos) current = sec; });
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.target === current.id));
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
   loadContent();
   loadSermons();
+  initSideTabs();
 </script>
 
 </body>

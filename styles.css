@@ -258,6 +258,40 @@ p.section-sub {
 .location .info dt:first-child { margin-top: 0; }
 .location .info dd { color: var(--muted); margin-top: 0.3rem; }
 
+/* 우측 섹션 스크롤 탭 */
+.side-tabs {
+  position: fixed;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.side-tab {
+  display: block;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  text-align: center;
+  min-width: 64px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  transition: background 0.2s, transform 0.2s;
+}
+.side-tab span { display: block; font-weight: 800; font-size: 0.85rem; color: var(--ink); }
+.side-tab small { display: block; font-size: 0.58rem; letter-spacing: 0.5px; color: var(--muted); margin-top: 0.15rem; }
+.side-tab:hover { transform: translateX(-3px); }
+.side-tab.active { background: var(--navy); }
+.side-tab.active span { color: white; }
+.side-tab.active small { color: var(--gold); }
+@media (max-width: 900px) {
+  .side-tabs { display: none; }
+}
+
 /* 팝업 공지 */
 #site-popup {
   position: fixed;
