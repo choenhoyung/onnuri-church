@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>교회 소개 - 청주 온누리감리교회</title>
+<meta name="description" content="청주 온누리감리교회 소개 - 담임목사 인사, 비전과 사명, 교회 연혁, 섬김의 사람들을 확인하세요.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="교회 소개 - 청주 온누리감리교회">
+<meta property="og:description" content="담임목사 인사, 비전과 사명, 교회 연혁, 섬김의 사람들을 확인하세요.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%9D%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Gowun+Dodum&family=Nanum+Gothic:wght@400;700;800&family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <a class="brand" href="index.html">청주 온누리감리교회</a>
+  <nav id="site-nav" class="site-nav"></nav>
+  <div class="header-actions">
+    <a class="admin-link-header" href="admin/">관리자</a>
+    <button id="sitemap-btn" class="hamburger-btn" aria-label="전체 사이트맵 열기"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<div id="sitemap-modal" class="sitemap-modal" hidden>
+  <div class="sitemap-modal-inner">
+    <button id="sitemap-close" class="sitemap-close" aria-label="닫기">✕</button>
+    <div id="sitemap-grid" class="sitemap-grid"></div>
+  </div>
+</div>
+
+<div id="mobile-drawer" class="mobile-drawer" hidden>
+  <div class="mobile-drawer-panel">
+    <button id="drawer-close" class="sitemap-close" aria-label="닫기">✕</button>
+    <div id="drawer-accordion" class="drawer-accordion"></div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="index.html#worship" class="bottom-nav-item"><span class="icon">🙏</span><span>예배</span></a>
+    <a href="index.html#sermons" class="bottom-nav-item"><span class="icon">📖</span><span>설교</span></a>
+    <a href="gallery.html" class="bottom-nav-item" data-page="gallery.html"><span class="icon">🖼️</span><span>앨범</span></a>
+    <a href="bulletins.html" class="bottom-nav-item" data-page="bulletins.html"><span class="icon">📰</span><span>주보</span></a>
+    <button type="button" class="bottom-nav-item" id="bottom-nav-more"><span class="icon">☰</span><span>더보기</span></button>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <h1>교회 소개</h1>
+  <p>우리 교회를 소개합니다. 담임목사 인사 · 비전과 사명 · 교회 연혁 · 섬김의 사람들을 확인하세요</p>
+</div>
+
+<section>
+  <div class="about-tabs" id="about-tabs">
+    <button class="about-tab active" data-tab="greeting">담임목사 인사</button>
+    <button class="about-tab" data-tab="vision">비전과 사명</button>
+    <button class="about-tab" data-tab="history">교회 연혁</button>
+    <button class="about-tab" data-tab="team">섬김의 사람들</button>
+  </div>
+
+  <div class="about-panel" id="panel-greeting">
+    <div class="greeting-grid">
+      <div class="greeting-photo" id="greeting-photo">✝</div>
+      <div class="greeting-text">
+        <span class="eyebrow-tag">GREETINGS</span>
+        <h2 id="greeting-name">담임목사</h2>
+        <p class="greeting-role" id="greeting-role">담임목사</p>
+        <p id="greeting-body">인사말을 불러오는 중입니다...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="about-panel" id="panel-vision" style="display:none">
+    <div class="admin-panel" style="max-width:720px;margin:0 auto">
+      <p id="vision-text" style="white-space:pre-line;line-height:1.9;font-size:1rem;color:var(--ink)">불러오는 중입니다...</p>
+    </div>
+  </div>
+
+  <div class="about-panel" id="panel-history" style="display:none">
+    <div class="history-timeline" id="history-timeline">
+      <p class="empty-state">불러오는 중입니다...</p>
+    </div>
+  </div>
+
+  <div class="about-panel" id="panel-team" style="display:none">
+    <div class="team-grid" id="team-grid">
+      <p class="empty-state">불러오는 중입니다...</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>청주 온누리감리교회</strong><br>
+  충북 청주시 서원구 성봉로 194 (개신동) · Tel. 043-265-1825, 266-1825<br>
+  © 2026 Onnuri Methodist Church. All rights reserved.<br>
+  <a class="admin-link" href="admin/">관리자</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-config.js"></script>
+<script src="menu.js"></script>
+<script>
+  document.querySelectorAll('.about-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.about-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.about-panel').forEach(p => p.style.display = 'none');
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).style.display = 'block';
+    });
+  });
+
+  async function loadGreeting() {
+    const { data } = await sb.from('site_settings').select('pastor_name, pastor_bio, pastor_photo_url').eq('id', 1).single();
+    if (!data) return;
+    document.getElementById('greeting-name').textContent = data.pastor_name;
+    document.getElementById('greeting-role').textContent = '담임목사';
+    document.getElementById('greeting-body').textContent = data.pastor_bio;
+    if (data.pastor_photo_url) {
+      document.getElementById('greeting-photo').innerHTML = `<img src="${data.pastor_photo_url}" alt="${data.pastor_name}">`;
+    }
+  }
+
+  async function loadVision() {
+    const { data } = await sb.from('site_settings').select('vision_text').eq('id', 1).single();
+    document.getElementById('vision-text').textContent = (data && data.vision_text) ||
+      '아직 등록된 비전과 사명 문구가 없습니다. 관리자 페이지에서 입력해주세요.';
+  }
+
+  async function loadHistory() {
+    const wrap = document.getElementById('history-timeline');
+    const { data } = await sb.from('church_history').select('*').order('sort_order');
+    if (!data || data.length === 0) {
+      wrap.innerHTML = '<p class="empty-state">아직 등록된 연혁이 없습니다.</p>';
+      return;
+    }
+    wrap.innerHTML = data.map(h => `
+      <div class="history-item">
+        <div class="history-year">${h.year}</div>
+        <div class="history-event">${h.event}</div>
+      </div>
+    `).join('');
+  }
+
+  async function loadTeam() {
+    const grid = document.getElementById('team-grid');
+    const { data } = await sb.from('serving_team').select('*').order('sort_order');
+    if (!data || data.length === 0) {
+      grid.innerHTML = '<p class="empty-state">아직 등록된 섬김이 정보가 없습니다.</p>';
+      return;
+    }
+    grid.innerHTML = data.map(t => `
+      <div class="team-card">
+        <div class="team-photo">${t.photo_url ? `<img src="${t.photo_url}" alt="${t.name}">` : '👤'}</div>
+        <div class="team-name">${t.name}</div>
+        <div class="team-role">${t.role}</div>
+      </div>
+    `).join('');
+  }
+
+  loadGreeting();
+  loadVision();
+  loadHistory();
+  loadTeam();
+</script>
+
+</body>
+</html>

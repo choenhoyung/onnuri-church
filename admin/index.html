@@ -37,6 +37,7 @@
       <button class="tab-btn" data-tab="popup"><span class="tab-icon">📢</span><span>팝업 공지</span></button>
       <button class="tab-btn" data-tab="departments"><span class="tab-icon">🧑‍🤝‍🧑</span><span>부서 소개</span></button>
       <button class="tab-btn" data-tab="events"><span class="tab-icon">📅</span><span>교회 일정</span></button>
+      <button class="tab-btn" data-tab="about"><span class="tab-icon">📘</span><span>교회소개 관리</span></button>
     </nav>
     <a class="btn small gold" href="../" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🏠 홈페이지 보기</a>
     <button class="btn small" id="logout-btn">로그아웃</button>
@@ -273,6 +274,42 @@
       <div class="row-list" id="events-admin-list" style="margin-top:2rem"></div>
     </div>
   </div>
+
+  <!-- 교회소개 관리 -->
+  <div class="tab-panel" id="tab-about" style="display:none">
+    <div class="admin-panel">
+      <h2>비전과 사명</h2>
+      <p class="hint">담임목사 인사말은 "홈페이지 문구" 탭에서 함께 관리됩니다.</p>
+      <div class="field" style="margin-top:1rem"><textarea id="vision-edit" style="min-height:140px"></textarea></div>
+      <button class="btn gold" id="save-vision-btn">저장</button>
+      <p class="error-msg" id="vision-msg"></p>
+    </div>
+
+    <div class="admin-panel">
+      <h2>교회 연혁</h2>
+      <div id="history-admin-list" style="margin-top:1rem"></div>
+      <h2 style="margin-top:2rem;font-size:1.05rem">연혁 추가</h2>
+      <div class="form-grid">
+        <div class="field"><label>연도</label><input id="hist-year" placeholder="예: 1981"></div>
+        <div class="field"><label>내용</label><input id="hist-event" placeholder="예: 교회 설립"></div>
+      </div>
+      <button class="btn gold" id="add-history-btn">추가</button>
+      <p class="error-msg" id="history-msg"></p>
+    </div>
+
+    <div class="admin-panel">
+      <h2>섬김의 사람들</h2>
+      <div id="team-admin-list" style="margin-top:1rem"></div>
+      <h2 style="margin-top:2rem;font-size:1.05rem">섬김이 추가</h2>
+      <div class="form-grid">
+        <div class="field"><label>이름</label><input id="team-name" placeholder="예: 김이삭"></div>
+        <div class="field"><label>역할/직분</label><input id="team-role" placeholder="예: 교육전도사"></div>
+      </div>
+      <div class="field"><label>사진(선택)</label><input type="file" id="team-photo-file" accept="image/*"></div>
+      <button class="btn gold" id="add-team-btn">추가</button>
+      <p class="error-msg" id="team-msg"></p>
+    </div>
+  </div>
   </div>
   </main>
 </div>
@@ -353,6 +390,9 @@
       loadPopupSettings();
       loadDepartments();
       loadEventsAdminList();
+      loadVisionEdit();
+      loadHistoryAdminList();
+      loadTeamAdminList();
     } else {
       loginView.style.display = 'block';
       dashboardView.style.display = 'none';
@@ -1178,6 +1218,123 @@
     document.getElementById('ev-location').value = '';
     document.getElementById('ev-description').value = '';
     loadEventsAdminList();
+  });
+
+  // ---- 교회소개 관리: 비전과 사명 ----
+  async function loadVisionEdit() {
+    const { data } = await sb.from('site_settings').select('vision_text').eq('id', 1).single();
+    document.getElementById('vision-edit').value = (data && data.vision_text) || '';
+  }
+  document.getElementById('save-vision-btn').addEventListener('click', async () => {
+    const vision_text = document.getElementById('vision-edit').value;
+    const msg = document.getElementById('vision-msg');
+    const { error } = await sb.from('site_settings').update({ vision_text }).eq('id', 1);
+    msg.style.color = error ? '#b23b3b' : '#2b7a3b';
+    msg.textContent = error ? '저장 실패: ' + error.message : '저장되었습니다.';
+  });
+
+  // ---- 교회소개 관리: 교회 연혁 ----
+  async function loadHistoryAdminList() {
+    const list = document.getElementById('history-admin-list');
+    const { data } = await sb.from('church_history').select('*').order('sort_order');
+    if (!data || data.length === 0) {
+      list.innerHTML = '<p class="hint">등록된 연혁이 없습니다.</p>';
+      return;
+    }
+    list.innerHTML = data.map(h => `
+      <div class="row-item" data-id="${h.id}">
+        <input class="hist-edit-year" value="${escapeAttr(h.year)}" style="width:100px">
+        <input class="hist-edit-event" value="${escapeAttr(h.event)}" style="flex:1;min-width:160px">
+        <div class="row-actions">
+          <button class="btn small" onclick="saveHistoryRow(${h.id}, this)">저장</button>
+          <button class="btn small danger" onclick="deleteHistoryRow(${h.id})">삭제</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  window.saveHistoryRow = async (id, btn) => {
+    const row = btn.closest('.row-item');
+    const update = {
+      year: row.querySelector('.hist-edit-year').value,
+      event: row.querySelector('.hist-edit-event').value
+    };
+    await sb.from('church_history').update(update).eq('id', id);
+    loadHistoryAdminList();
+  };
+  window.deleteHistoryRow = async (id) => {
+    if (!confirm('이 연혁을 삭제할까요?')) return;
+    await sb.from('church_history').delete().eq('id', id);
+    loadHistoryAdminList();
+  };
+  document.getElementById('add-history-btn').addEventListener('click', async () => {
+    const year = document.getElementById('hist-year').value.trim();
+    const event = document.getElementById('hist-event').value.trim();
+    const msg = document.getElementById('history-msg');
+    if (!year || !event) { msg.textContent = '연도와 내용을 입력해주세요.'; return; }
+    const { data } = await sb.from('church_history').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+    const sort_order = (data && data[0] ? data[0].sort_order : 0) + 1;
+    await sb.from('church_history').insert({ year, event, sort_order });
+    document.getElementById('hist-year').value = '';
+    document.getElementById('hist-event').value = '';
+    loadHistoryAdminList();
+  });
+
+  // ---- 교회소개 관리: 섬김의 사람들 ----
+  async function loadTeamAdminList() {
+    const list = document.getElementById('team-admin-list');
+    const { data } = await sb.from('serving_team').select('*').order('sort_order');
+    if (!data || data.length === 0) {
+      list.innerHTML = '<p class="hint">등록된 섬김이가 없습니다.</p>';
+      return;
+    }
+    list.innerHTML = data.map(t => `
+      <div class="row-item" data-id="${t.id}">
+        ${t.photo_url ? `<img class="thumb" src="${t.photo_url}">` : ''}
+        <input class="team-edit-name" value="${escapeAttr(t.name)}" style="flex:1;min-width:100px">
+        <input class="team-edit-role" value="${escapeAttr(t.role)}" style="flex:1;min-width:100px">
+        <div class="row-actions">
+          <button class="btn small" onclick="saveTeamRow(${t.id}, this)">저장</button>
+          <button class="btn small danger" onclick="deleteTeamRow(${t.id})">삭제</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  window.saveTeamRow = async (id, btn) => {
+    const row = btn.closest('.row-item');
+    const update = {
+      name: row.querySelector('.team-edit-name').value,
+      role: row.querySelector('.team-edit-role').value
+    };
+    await sb.from('serving_team').update(update).eq('id', id);
+    loadTeamAdminList();
+  };
+  window.deleteTeamRow = async (id) => {
+    if (!confirm('이 섬김이를 삭제할까요?')) return;
+    await sb.from('serving_team').delete().eq('id', id);
+    loadTeamAdminList();
+  };
+  document.getElementById('add-team-btn').addEventListener('click', async () => {
+    const name = document.getElementById('team-name').value.trim();
+    const role = document.getElementById('team-role').value.trim();
+    const msg = document.getElementById('team-msg');
+    if (!name) { msg.textContent = '이름을 입력해주세요.'; return; }
+    let photo_url = '';
+    const file = document.getElementById('team-photo-file').files[0];
+    if (file) {
+      const compressed = await compressImage(file, 600, 0.85);
+      const path = safeFileName(compressed);
+      const { error: uploadError } = await sb.storage.from('hero-images').upload(path, compressed);
+      if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
+      const { data: pub } = sb.storage.from('hero-images').getPublicUrl(path);
+      photo_url = pub.publicUrl;
+    }
+    const { data } = await sb.from('serving_team').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+    const sort_order = (data && data[0] ? data[0].sort_order : 0) + 1;
+    await sb.from('serving_team').insert({ name, role, photo_url, sort_order });
+    document.getElementById('team-name').value = '';
+    document.getElementById('team-role').value = '';
+    document.getElementById('team-photo-file').value = '';
+    loadTeamAdminList();
   });
 
   checkSession();
