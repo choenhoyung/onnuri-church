@@ -103,14 +103,23 @@
 <script src="supabase-config.js"></script>
 <script src="menu.js"></script>
 <script>
+  const ABOUT_TAB_KEYS = ['greeting', 'vision', 'history', 'team'];
+
+  function activateAboutTab(tabKey) {
+    if (!ABOUT_TAB_KEYS.includes(tabKey)) return;
+    document.querySelectorAll('.about-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
+    document.querySelectorAll('.about-panel').forEach(p => p.style.display = 'none');
+    document.getElementById('panel-' + tabKey).style.display = 'block';
+  }
+
   document.querySelectorAll('.about-tab').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.about-tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.about-panel').forEach(p => p.style.display = 'none');
-      btn.classList.add('active');
-      document.getElementById('panel-' + btn.dataset.tab).style.display = 'block';
+      activateAboutTab(btn.dataset.tab);
+      history.replaceState(null, '', '#' + btn.dataset.tab);
     });
   });
+
+  activateAboutTab((location.hash || '').slice(1) || 'greeting');
 
   async function loadGreeting() {
     const { data } = await sb.from('site_settings').select('pastor_name, pastor_bio, pastor_photo_url').eq('id', 1).single();
