@@ -117,6 +117,16 @@ function initMenuOverlays() {
   sitemapModal.addEventListener('click', (e) => { if (e.target === sitemapModal) closeOverlays(); });
   mobileDrawer.addEventListener('click', (e) => { if (e.target === mobileDrawer) closeOverlays(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeOverlays(); });
+
+  const bottomNavMore = document.getElementById('bottom-nav-more');
+  if (bottomNavMore) bottomNavMore.addEventListener('click', openOverlay);
+}
+
+function initBottomNav() {
+  const page = (location.pathname.split('/').pop() || 'index.html');
+  document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
+    if (item.dataset.page === page) item.classList.add('active');
+  });
 }
 
 async function applyTheme() {
@@ -172,3 +182,4 @@ initMenuOverlays();
 initMenu();
 applyTheme();
 initPopup();
+initBottomNav();

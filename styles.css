@@ -288,6 +288,46 @@ p.section-sub {
 .location .info dt:first-child { margin-top: 0; }
 .location .info dd { color: var(--muted); margin-top: 0.3rem; }
 
+/* 모바일 하단 고정 네비 */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 950;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+}
+.bottom-nav-inner {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.35rem 0.2rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+}
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.3rem 0.2rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--muted);
+  flex: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.bottom-nav-item .icon { font-size: 1.3rem; }
+.bottom-nav-item.active { color: var(--gold); }
+@media (max-width: 860px) {
+  .bottom-nav { display: block; }
+  body { padding-bottom: 60px; }
+}
+
 /* 스크롤 등장 애니메이션 */
 .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
 .reveal.visible { opacity: 1; transform: none; }
@@ -337,7 +377,7 @@ p.section-sub {
 .side-tab:hover .label,
 .side-tab.active .label { opacity: 1; transform: translateX(0); }
 .side-tab.active .dot { background: var(--gold); border-color: var(--gold); transform: scale(1.35); }
-@media (max-width: 900px) {
+@media (max-width: 860px) {
   .side-tabs { display: none; }
 }
 
