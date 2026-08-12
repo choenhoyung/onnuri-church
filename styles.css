@@ -887,10 +887,48 @@ footer .admin-link:hover { color: var(--gold); }
 .menu-item-header { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
 .menu-item-header input { padding: 0.5rem 0.7rem; border: 1px solid #d9d3c6; border-radius: 6px; font-family: inherit; }
 .menu-item-header .menu-title-input { flex: 1; min-width: 120px; font-weight: 700; }
-.menu-item-header .menu-url-input { flex: 2; min-width: 160px; }
 .submenu-list { margin: 0.8rem 0 0.6rem; padding-left: 1rem; border-left: 2px solid #e4ddcd; display: flex; flex-direction: column; gap: 0.5rem; }
 .submenu-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .submenu-row input { padding: 0.4rem 0.6rem; border: 1px solid #d9d3c6; border-radius: 6px; font-family: inherit; font-size: 0.88rem; }
 .submenu-row .submenu-label-input { flex: 1; min-width: 100px; }
-.submenu-row .submenu-url-input { flex: 2; min-width: 140px; }
 .hint { color: var(--muted); font-size: 0.82rem; margin-top: 0.4rem; }
+.menu-url-field { position: relative; flex: 2; min-width: 160px; display: flex; }
+.menu-url-field input { width: 100%; }
+.menu-url-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #d9d3c6;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+  z-index: 300;
+  padding: 0.3rem 0;
+}
+.menu-url-group {
+  padding: 0.4rem 0.9rem 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.menu-url-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-url-option:hover { background: var(--cream); color: var(--gold); }
+.menu-url-option-label { font-weight: 600; white-space: nowrap; }
+.menu-url-option-path { color: var(--muted); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-url-empty { padding: 0.6rem 0.9rem; font-size: 0.85rem; color: var(--muted); }

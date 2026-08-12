@@ -143,16 +143,6 @@
         <button class="btn gold" id="save-menu-btn">전체 저장</button>
       </div>
       <p class="error-msg" id="menu-msg"></p>
-      <datalist id="menu-url-options">
-        <option value="index.html" label="홈페이지"></option>
-        <option value="about.html" label="교회소개 페이지"></option>
-        <option value="schedule.html" label="교회 일정"></option>
-        <option value="gallery.html" label="앨범"></option>
-        <option value="bulletins.html" label="교회주보"></option>
-        <option value="index.html#pastor" label="담임목사 인사(홈 화면 섹션)"></option>
-        <option value="index.html#worship" label="예배시간 안내(홈 화면 섹션)"></option>
-        <option value="index.html#location" label="오시는 길(홈 화면 섹션)"></option>
-      </datalist>
     </div>
   </div>
 
@@ -808,13 +798,39 @@
     });
   }
 
+  const STATIC_URL_OPTIONS = [
+    { group: '주요 페이지', label: '홈페이지', url: 'index.html' },
+    { group: '주요 페이지', label: '교회소개', url: 'about.html' },
+    { group: '주요 페이지', label: '교회 일정', url: 'schedule.html' },
+    { group: '주요 페이지', label: '앨범', url: 'gallery.html' },
+    { group: '주요 페이지', label: '교회주보', url: 'bulletins.html' },
+    { group: '홈 화면 섹션', label: '담임목사 인사', url: 'index.html#pastor' },
+    { group: '홈 화면 섹션', label: '예배시간 안내', url: 'index.html#worship' },
+    { group: '홈 화면 섹션', label: '최근 설교 영상', url: 'index.html#sermons' },
+    { group: '홈 화면 섹션', label: '오시는 길', url: 'index.html#location' }
+  ];
+  let departmentUrlOptions = [];
+
+  function getUrlOptions() {
+    return STATIC_URL_OPTIONS.concat(departmentUrlOptions);
+  }
+
+  function urlFieldHtml(className, value, placeholder) {
+    return `
+      <span class="menu-url-field">
+        <input class="${className}" autocomplete="off" value="${escapeAttr(value)}" placeholder="${placeholder}">
+        <div class="menu-url-panel" hidden></div>
+      </span>
+    `;
+  }
+
   function renderMenuAdmin() {
     const container = document.getElementById('menu-admin-list');
     container.innerHTML = menuState.map((item, i) => `
       <div class="menu-item-block" data-index="${i}">
         <div class="menu-item-header">
           <input class="menu-title-input" value="${escapeAttr(item.title)}" placeholder="메뉴 이름">
-          <input class="menu-url-input" list="menu-url-options" value="${escapeAttr(item.url || '')}" placeholder="연결 주소 (클릭하면 목록에서 선택 가능)">
+          ${urlFieldHtml('menu-url-input', item.url || '', '연결 주소 (클릭하면 목록에서 선택 가능)')}
           <div class="row-actions">
             <button class="btn small" onclick="moveMenuItem(${i}, -1)">▲</button>
             <button class="btn small" onclick="moveMenuItem(${i}, 1)">▼</button>
@@ -825,7 +841,7 @@
           ${(item.submenus || []).map((sub, j) => `
             <div class="submenu-row" data-index="${j}">
               <input class="submenu-label-input" value="${escapeAttr(sub.label)}" placeholder="서브메뉴 이름">
-              <input class="submenu-url-input" list="menu-url-options" value="${escapeAttr(sub.url || '')}" placeholder="연결 주소 (클릭하면 목록에서 선택 가능)">
+              ${urlFieldHtml('submenu-url-input', sub.url || '', '연결 주소 (클릭하면 목록에서 선택 가능)')}
               <div class="row-actions">
                 <button class="btn small" onclick="moveSubmenuItem(${i}, ${j}, -1)">▲</button>
                 <button class="btn small" onclick="moveSubmenuItem(${i}, ${j}, 1)">▼</button>
@@ -837,7 +853,65 @@
         <button class="btn small gold" onclick="addSubmenuItem(${i})">+ 서브메뉴 추가</button>
       </div>
     `).join('');
+    initUrlDropdowns();
   }
+
+  function closeAllUrlPanels() {
+    document.querySelectorAll('.menu-url-panel').forEach(p => { p.hidden = true; });
+  }
+
+  function renderUrlPanel(panel, input) {
+    const q = input.value.trim().toLowerCase();
+    const options = getUrlOptions().filter(o =>
+      !q || o.label.toLowerCase().includes(q) || o.url.toLowerCase().includes(q)
+    );
+    if (!options.length) {
+      panel.innerHTML = '<p class="menu-url-empty">일치하는 페이지가 없습니다. 직접 입력하세요.</p>';
+      return;
+    }
+    const groups = [];
+    options.forEach(o => {
+      let g = groups.find(g => g.name === o.group);
+      if (!g) { g = { name: o.group, items: [] }; groups.push(g); }
+      g.items.push(o);
+    });
+    panel.innerHTML = groups.map(g => `
+      <div class="menu-url-group">${escapeAttr(g.name)}</div>
+      ${g.items.map(o => `
+        <button type="button" class="menu-url-option" data-url="${escapeAttr(o.url)}">
+          <span class="menu-url-option-label">${escapeAttr(o.label)}</span>
+          <span class="menu-url-option-path">${escapeAttr(o.url)}</span>
+        </button>
+      `).join('')}
+    `).join('');
+  }
+
+  function initUrlDropdowns() {
+    document.querySelectorAll('.menu-url-field').forEach(field => {
+      const input = field.querySelector('input');
+      const panel = field.querySelector('.menu-url-panel');
+      input.addEventListener('focus', () => {
+        closeAllUrlPanels();
+        renderUrlPanel(panel, input);
+        panel.hidden = false;
+      });
+      input.addEventListener('input', () => {
+        renderUrlPanel(panel, input);
+        panel.hidden = false;
+      });
+      panel.addEventListener('mousedown', (e) => {
+        const btn = e.target.closest('.menu-url-option');
+        if (!btn) return;
+        e.preventDefault();
+        input.value = btn.dataset.url;
+        panel.hidden = true;
+      });
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.menu-url-field')) closeAllUrlPanels();
+  });
 
   window.moveMenuItem = (i, dir) => {
     syncMenuStateFromDOM();
@@ -1124,15 +1198,11 @@
     const { data } = await sb.from('departments').select('*').order('sort_order');
     departmentsData = data || [];
     renderDepartments();
-    const datalist = document.getElementById('menu-url-options');
-    datalist.querySelectorAll('option[data-department]').forEach(o => o.remove());
-    departmentsData.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = 'department.html?slug=' + encodeURIComponent(d.slug);
-      opt.label = d.name + ' 부서 소개';
-      opt.dataset.department = '1';
-      datalist.appendChild(opt);
-    });
+    departmentUrlOptions = departmentsData.map(d => ({
+      group: '부서 소개',
+      label: d.name,
+      url: 'department.html?slug=' + encodeURIComponent(d.slug)
+    }));
   }
 
   function renderDepartments() {
