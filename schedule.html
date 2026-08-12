@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>교회 일정 - 청주 온누리감리교회</title>
+<meta name="description" content="청주 온누리감리교회 일정 - 이번 달 예배와 행사, 다가오는 모임을 한 곳에서 확인하세요.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="교회 일정 - 청주 온누리감리교회">
+<meta property="og:description" content="이번 달 예배와 행사, 다가오는 모임을 한 곳에서 확인하세요.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%9D%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Gowun+Dodum&family=Nanum+Gothic:wght@400;700;800&family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <a class="brand" href="index.html">청주 온누리감리교회</a>
+  <nav id="site-nav" class="site-nav"></nav>
+  <div class="header-actions">
+    <a class="admin-link-header" href="admin/">관리자</a>
+    <button id="sitemap-btn" class="hamburger-btn" aria-label="전체 사이트맵 열기"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<div id="sitemap-modal" class="sitemap-modal" hidden>
+  <div class="sitemap-modal-inner">
+    <button id="sitemap-close" class="sitemap-close" aria-label="닫기">✕</button>
+    <div id="sitemap-grid" class="sitemap-grid"></div>
+  </div>
+</div>
+
+<div id="mobile-drawer" class="mobile-drawer" hidden>
+  <div class="mobile-drawer-panel">
+    <button id="drawer-close" class="sitemap-close" aria-label="닫기">✕</button>
+    <div id="drawer-accordion" class="drawer-accordion"></div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="index.html#worship" class="bottom-nav-item"><span class="icon">🙏</span><span>예배</span></a>
+    <a href="index.html#sermons" class="bottom-nav-item"><span class="icon">📖</span><span>설교</span></a>
+    <a href="gallery.html" class="bottom-nav-item" data-page="gallery.html"><span class="icon">🖼️</span><span>앨범</span></a>
+    <a href="bulletins.html" class="bottom-nav-item" data-page="bulletins.html"><span class="icon">📰</span><span>주보</span></a>
+    <button type="button" class="bottom-nav-item" id="bottom-nav-more"><span class="icon">☰</span><span>더보기</span></button>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <h1>교회 일정</h1>
+  <p>이번 달 예배·행사 일정과 다가오는 모임을 한 곳에서 확인하세요</p>
+</div>
+
+<section>
+  <div class="schedule-layout">
+    <div class="calendar-card">
+      <div class="calendar-header">
+        <button type="button" id="cal-prev" class="cal-nav-btn" aria-label="이전 달">‹</button>
+        <h3 id="cal-title">2026년 8월</h3>
+        <button type="button" id="cal-next" class="cal-nav-btn" aria-label="다음 달">›</button>
+      </div>
+      <div class="calendar-weekdays">
+        <span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+    <div class="schedule-panel">
+      <h3 id="schedule-panel-title">다가오는 일정</h3>
+      <div id="schedule-list" class="schedule-list">
+        <p class="empty-state">일정을 불러오는 중입니다...</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>청주 온누리감리교회</strong><br>
+  충북 청주시 서원구 성봉로 194 (개신동) · Tel. 043-265-1825, 266-1825<br>
+  © 2026 Onnuri Methodist Church. All rights reserved.<br>
+  <a class="admin-link" href="admin/">관리자</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-config.js"></script>
+<script src="menu.js"></script>
+<script>
+  let allEvents = [];
+  let currentMonth = new Date();
+  currentMonth.setDate(1);
+  let selectedDateKey = null;
+
+  function dateKey(y, m, d) {
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  function renderCalendar() {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    document.getElementById('cal-title').textContent = `${y}년 ${m + 1}월`;
+
+    const firstWeekday = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const todayKey = dateKey(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+
+    const eventDays = new Set(allEvents.map(e => e.event_date));
+
+    let cells = '';
+    for (let i = 0; i < firstWeekday; i++) cells += '<div class="cal-cell empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = dateKey(y, m, d);
+      const weekday = new Date(y, m, d).getDay();
+      const classes = ['cal-cell'];
+      if (weekday === 0) classes.push('sun');
+      if (weekday === 6) classes.push('sat');
+      if (key === todayKey) classes.push('today');
+      if (key === selectedDateKey) classes.push('selected');
+      const dot = eventDays.has(key) ? '<span class="cal-dot"></span>' : '';
+      cells += `<button type="button" class="${classes.join(' ')}" data-key="${key}">${d}${dot}</button>`;
+    }
+    document.getElementById('calendar-grid').innerHTML = cells;
+
+    document.querySelectorAll('.cal-cell:not(.empty)').forEach(cell => {
+      cell.addEventListener('click', () => {
+        selectedDateKey = cell.dataset.key === selectedDateKey ? null : cell.dataset.key;
+        renderCalendar();
+        renderSchedulePanel();
+      });
+    });
+  }
+
+  function formatEventDate(key) {
+    const [y, m, d] = key.split('-').map(Number);
+    return `${y}. ${m}. ${d}`;
+  }
+
+  function renderSchedulePanel() {
+    const title = document.getElementById('schedule-panel-title');
+    const list = document.getElementById('schedule-list');
+
+    let items;
+    if (selectedDateKey) {
+      title.textContent = `${formatEventDate(selectedDateKey)} 일정`;
+      items = allEvents.filter(e => e.event_date === selectedDateKey);
+    } else {
+      title.textContent = '다가오는 일정';
+      const todayKey = dateKey(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+      items = allEvents.filter(e => e.event_date >= todayKey).slice(0, 5);
+    }
+
+    if (!items.length) {
+      list.innerHTML = '<p class="empty-state">예정된 일정이 없습니다.</p>';
+      return;
+    }
+    list.innerHTML = items.map(e => `
+      <div class="schedule-item">
+        <div class="schedule-item-date">${formatEventDate(e.event_date)}${e.event_time ? ' · ' + e.event_time : ''}</div>
+        <h4>${e.title}</h4>
+        ${e.location ? `<div class="schedule-item-location">📍 ${e.location}</div>` : ''}
+        ${e.description ? `<p>${e.description}</p>` : ''}
+      </div>
+    `).join('');
+  }
+
+  async function loadEvents() {
+    const { data } = await sb.from('events').select('*').order('event_date');
+    allEvents = data || [];
+    renderCalendar();
+    renderSchedulePanel();
+  }
+
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    currentMonth.setMonth(currentMonth.getMonth() - 1);
+    renderCalendar();
+  });
+  document.getElementById('cal-next').addEventListener('click', () => {
+    currentMonth.setMonth(currentMonth.getMonth() + 1);
+    renderCalendar();
+  });
+
+  loadEvents();
+</script>
+
+</body>
+</html>

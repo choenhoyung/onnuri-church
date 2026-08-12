@@ -382,6 +382,92 @@ p.section-sub {
   .side-tabs { display: none; }
 }
 
+/* 교회 일정 (캘린더) */
+.schedule-layout {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 800px) {
+  .schedule-layout { grid-template-columns: 1fr; }
+}
+.calendar-card {
+  background: white;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.6rem 1.4rem 1.2rem;
+}
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+.calendar-header h3 { font-family: 'Noto Serif KR', serif; font-size: 1.2rem; }
+.cal-nav-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid #e4ddcd;
+  background: white;
+  font-size: 1.2rem;
+  color: var(--navy);
+  cursor: pointer;
+}
+.cal-nav-btn:hover { background: var(--cream); }
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+.calendar-weekdays .sun { color: #c0392b; }
+.calendar-weekdays .sat { color: #2b6cb0; }
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-cell {
+  position: relative;
+  aspect-ratio: 1;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+.cal-cell.empty { cursor: default; }
+.cal-cell.sun { color: #c0392b; }
+.cal-cell.sat { color: #2b6cb0; }
+.cal-cell:hover:not(.empty) { background: var(--cream); }
+.cal-cell.today { font-weight: 800; box-shadow: inset 0 0 0 1.5px var(--gold); }
+.cal-cell.selected { background: var(--navy); color: white !important; }
+.cal-dot {
+  position: absolute;
+  bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--gold);
+}
+.cal-cell.selected .cal-dot { background: white; }
+.schedule-panel {
+  background: white;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.6rem 1.6rem 1.8rem;
+}
+.schedule-panel h3 { font-family: 'Noto Serif KR', serif; font-size: 1.1rem; margin-bottom: 1rem; }
+.schedule-list { display: flex; flex-direction: column; gap: 1rem; }
+.schedule-item { border-left: 3px solid var(--gold); padding-left: 0.9rem; }
+.schedule-item-date { font-size: 0.78rem; color: var(--gold); font-weight: 700; }
+.schedule-item h4 { font-family: 'Noto Serif KR', serif; font-size: 1rem; margin: 0.2rem 0 0.3rem; }
+.schedule-item-location { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; }
+.schedule-item p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
 /* 팝업 공지 */
 #site-popup {
   position: fixed;
