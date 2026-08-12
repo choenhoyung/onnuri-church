@@ -221,7 +221,9 @@ p.section-sub {
   background: var(--navy); color: var(--gold);
   display: flex; align-items: center; justify-content: center;
   font-size: 2.6rem; flex-shrink: 0;
+  overflow: hidden;
 }
+.pastor .badge img { width: 100%; height: 100%; object-fit: cover; }
 .pastor .text { max-width: 32rem; }
 .pastor .text .role { color: var(--gold); font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; margin-bottom: 0.3rem; }
 .pastor .text h3 { font-family: 'Noto Serif KR', serif; font-size: 1.5rem; margin-bottom: 0.6rem; }

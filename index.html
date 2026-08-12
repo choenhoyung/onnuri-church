@@ -146,7 +146,7 @@
   <h2 class="section-title">담임목사</h2>
   <p class="section-sub">말씀과 기도로 성도님들을 섬깁니다</p>
   <div class="pastor">
-    <div class="badge">✝</div>
+    <div class="badge" id="pastor-badge">✝</div>
     <div class="text">
       <div class="role">SENIOR PASTOR</div>
       <h3 id="pastor-name">변종태 담임목사</h3>
@@ -224,6 +224,9 @@
       document.getElementById('hero-ref').textContent = settings.hero_ref;
       document.getElementById('pastor-name').textContent = settings.pastor_name;
       document.getElementById('pastor-bio').textContent = settings.pastor_bio;
+      if (settings.pastor_photo_url) {
+        document.getElementById('pastor-badge').innerHTML = `<img src="${settings.pastor_photo_url}" alt="${settings.pastor_name}">`;
+      }
       document.getElementById('about-worship').textContent = settings.about_worship;
       document.getElementById('about-love').textContent = settings.about_love;
       document.getElementById('about-bible').textContent = settings.about_bible;

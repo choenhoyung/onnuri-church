@@ -172,6 +172,11 @@
         <input type="file" id="theme-hero-bg-file" accept="image/*">
       </div>
       <div id="theme-hero-bg-preview" style="margin-top:0.8rem"></div>
+      <div class="field" style="margin-top:1.2rem">
+        <label>담임목사 프로필 사진 (선택)</label>
+        <input type="file" id="theme-pastor-photo-file" accept="image/*">
+      </div>
+      <div id="theme-pastor-photo-preview" style="margin-top:0.8rem"></div>
       <div style="margin-top:1.4rem;display:flex;gap:0.6rem;align-items:center">
         <button class="btn" id="reset-theme-btn">기본값으로 되돌리기</button>
         <button class="btn gold" id="save-theme-btn">저장</button>
@@ -635,24 +640,42 @@
 
   // ---- 사이트 꾸미기 ----
   let currentHeroBgImage = '';
+  let currentPastorPhoto = '';
+
+  function bindRemoveImageBtn(btnId, onRemove) {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.addEventListener('click', onRemove);
+  }
 
   async function loadTheme() {
-    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image').eq('id', 1).single();
+    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url').eq('id', 1).single();
     if (!data) return;
     document.getElementById('theme-banner-bg').value = data.banner_bg_color || '#1c2b3a';
     document.getElementById('theme-banner-text').value = data.banner_text_color || '#ffffff';
     document.getElementById('theme-font').value = data.font_family || '';
     document.getElementById('theme-hero-style').value = data.hero_style || '';
+
     currentHeroBgImage = data.hero_bg_image || '';
-    const preview = document.getElementById('theme-hero-bg-preview');
-    preview.innerHTML = currentHeroBgImage
+    const heroPreview = document.getElementById('theme-hero-bg-preview');
+    heroPreview.innerHTML = currentHeroBgImage
       ? `<img src="${currentHeroBgImage}" style="max-width:240px;border-radius:8px;display:block">
          <button class="btn small danger" id="remove-hero-bg-btn" style="margin-top:0.6rem">사진 제거</button>`
       : '';
-    const removeBtn = document.getElementById('remove-hero-bg-btn');
-    if (removeBtn) removeBtn.addEventListener('click', async () => {
+    bindRemoveImageBtn('remove-hero-bg-btn', async () => {
       currentHeroBgImage = '';
       await sb.from('site_settings').update({ hero_bg_image: '' }).eq('id', 1);
+      loadTheme();
+    });
+
+    currentPastorPhoto = data.pastor_photo_url || '';
+    const pastorPreview = document.getElementById('theme-pastor-photo-preview');
+    pastorPreview.innerHTML = currentPastorPhoto
+      ? `<img src="${currentPastorPhoto}" style="max-width:140px;border-radius:50%;display:block">
+         <button class="btn small danger" id="remove-pastor-photo-btn" style="margin-top:0.6rem">사진 제거</button>`
+      : '';
+    bindRemoveImageBtn('remove-pastor-photo-btn', async () => {
+      currentPastorPhoto = '';
+      await sb.from('site_settings').update({ pastor_photo_url: '' }).eq('id', 1);
       loadTheme();
     });
   }
@@ -664,19 +687,31 @@
     const hero_style = document.getElementById('theme-hero-style').value;
     const msg = document.getElementById('theme-msg');
     let hero_bg_image = currentHeroBgImage;
+    let pastor_photo_url = currentPastorPhoto;
 
-    const file = document.getElementById('theme-hero-bg-file').files[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
-      if (file.size > 8 * 1024 * 1024) { msg.textContent = '이미지 용량은 8MB 이하여야 합니다.'; return; }
-      const path = safeFileName(file);
-      const { error: uploadError } = await sb.storage.from('hero-images').upload(path, file);
+    const heroFile = document.getElementById('theme-hero-bg-file').files[0];
+    if (heroFile) {
+      if (!heroFile.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
+      if (heroFile.size > 8 * 1024 * 1024) { msg.textContent = '이미지 용량은 8MB 이하여야 합니다.'; return; }
+      const path = safeFileName(heroFile);
+      const { error: uploadError } = await sb.storage.from('hero-images').upload(path, heroFile);
       if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
       const { data: pub } = sb.storage.from('hero-images').getPublicUrl(path);
       hero_bg_image = pub.publicUrl;
     }
 
-    const { error } = await sb.from('site_settings').update({ banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image }).eq('id', 1);
+    const pastorFile = document.getElementById('theme-pastor-photo-file').files[0];
+    if (pastorFile) {
+      if (!pastorFile.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
+      if (pastorFile.size > 5 * 1024 * 1024) { msg.textContent = '이미지 용량은 5MB 이하여야 합니다.'; return; }
+      const path = safeFileName(pastorFile);
+      const { error: uploadError } = await sb.storage.from('hero-images').upload(path, pastorFile);
+      if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
+      const { data: pub } = sb.storage.from('hero-images').getPublicUrl(path);
+      pastor_photo_url = pub.publicUrl;
+    }
+
+    const { error } = await sb.from('site_settings').update({ banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url }).eq('id', 1);
     msg.style.color = error ? '#b23b3b' : '#2b7a3b';
     msg.textContent = error ? '저장 실패: ' + error.message : '저장되었습니다. 실제 사이트에 바로 반영됩니다.';
     if (!error) loadTheme();
@@ -684,7 +719,7 @@
 
   document.getElementById('reset-theme-btn').addEventListener('click', async () => {
     const msg = document.getElementById('theme-msg');
-    const { error } = await sb.from('site_settings').update({ banner_bg_color: '', banner_text_color: '', font_family: '', hero_style: '', hero_bg_image: '' }).eq('id', 1);
+    const { error } = await sb.from('site_settings').update({ banner_bg_color: '', banner_text_color: '', font_family: '', hero_style: '', hero_bg_image: '', pastor_photo_url: '' }).eq('id', 1);
     if (!error) loadTheme();
     msg.style.color = error ? '#b23b3b' : '#2b7a3b';
     msg.textContent = error ? '실패: ' + error.message : '기본값으로 되돌렸습니다.';
