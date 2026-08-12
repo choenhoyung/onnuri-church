@@ -3,11 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>교회주보 - 청주 온누리감리교회</title>
-<meta name="description" content="청주 온누리감리교회 주보 - 매주 발행되는 교회 소식과 말씀을 확인하세요.">
-<meta property="og:type" content="website">
-<meta property="og:title" content="교회주보 - 청주 온누리감리교회">
-<meta property="og:description" content="매주 발행되는 교회 소식과 말씀을 확인하세요.">
+<title>부서 소개 - 청주 온누리감리교회</title>
+<meta name="description" content="청주 온누리감리교회 부서별 소개 페이지입니다.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%9D%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Gowun+Dodum&family=Nanum+Gothic:wght@400;700;800&family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet">
@@ -48,14 +45,17 @@
   </div>
 </nav>
 
-<div class="page-hero">
-  <h1>교회주보</h1>
-  <p>매주 발행되는 교회 소식과 말씀을 확인하세요</p>
+<div class="page-hero" id="dept-hero">
+  <h1 id="dept-name">부서 소개</h1>
+  <p id="dept-leader"></p>
 </div>
 
 <section>
-  <div class="bulletin-list" id="bulletin-list">
-    <p class="empty-state">주보를 불러오는 중입니다...</p>
+  <p class="section-sub" id="dept-description" style="max-width:640px;margin:0 auto 2.5rem"></p>
+  <h2 class="section-title">부서 앨범</h2>
+  <p class="section-sub">이 부서의 활동 사진을 모아봤어요</p>
+  <div class="gallery-grid" id="dept-gallery">
+    <p class="empty-state">사진을 불러오는 중입니다...</p>
   </div>
 </section>
 
@@ -70,58 +70,37 @@
 <script src="supabase-config.js"></script>
 <script src="menu.js"></script>
 <script>
-  function formatDate(d) {
-    const date = new Date(d);
-    return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}`;
-  }
-  function isPdfUrl(url) { return /\.pdf(\?|$)/i.test(url); }
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('slug') || '유치부';
 
-  let bulletinsData = [];
+  async function loadDepartment() {
+    const { data: dept } = await sb.from('departments').select('*').eq('slug', slug).single();
+    if (dept) {
+      document.title = `${dept.name} - 청주 온누리감리교회`;
+      document.getElementById('dept-name').textContent = dept.name;
+      document.getElementById('dept-leader').textContent = dept.leader_name ? `담당: ${dept.leader_name}` : '';
+      document.getElementById('dept-description').textContent = dept.description;
+      if (dept.banner_image) {
+        document.getElementById('dept-hero').style.background = `linear-gradient(180deg, rgba(8,13,22,0.55), rgba(8,13,22,0.8)), url('${dept.banner_image}') center/cover no-repeat`;
+      }
+    } else {
+      document.getElementById('dept-name').textContent = slug;
+    }
 
-  window.toggleBulletinViewer = function (i) {
-    const viewer = document.getElementById('bulletin-viewer-' + i);
-    const btn = document.getElementById('bulletin-toggle-' + i);
-    const b = bulletinsData[i];
-    const isOpen = !viewer.hidden;
-    if (isOpen) {
-      viewer.hidden = true;
-      btn.textContent = '주보 보기 ▾';
+    const grid = document.getElementById('dept-gallery');
+    const { data: photos } = await sb.from('photos').select('*').eq('department', slug).order('sort_order').order('created_at', { ascending: false });
+    if (!photos || photos.length === 0) {
+      grid.innerHTML = '<p class="empty-state">아직 등록된 사진이 없습니다.</p>';
       return;
     }
-    if (!viewer.dataset.loaded) {
-      viewer.innerHTML = isPdfUrl(b.file_url)
-        ? `<iframe src="${b.file_url}" loading="lazy"></iframe>`
-        : `<img src="${b.file_url}" alt="${b.title}">`;
-      viewer.dataset.loaded = '1';
-    }
-    viewer.hidden = false;
-    btn.textContent = '주보 접기 ▴';
-  };
-
-  async function loadBulletins() {
-    const list = document.getElementById('bulletin-list');
-    const { data: bulletins, error } = await sb.from('bulletins').select('*').order('bulletin_date', { ascending: false });
-    if (error || !bulletins || bulletins.length === 0) {
-      list.innerHTML = '<p class="empty-state">아직 등록된 주보가 없습니다.</p>';
-      return;
-    }
-    bulletinsData = bulletins;
-    list.innerHTML = bulletins.map((b, i) => `
-      <div class="bulletin-item">
-        <div class="date">${formatDate(b.bulletin_date)}</div>
-        <h3>${b.title}</h3>
-        ${b.description ? `<p>${b.description}</p>` : ''}
-        ${b.file_url ? `
-          <div class="bulletin-file-actions">
-            <button type="button" class="file-link" id="bulletin-toggle-${i}" onclick="toggleBulletinViewer(${i})">주보 보기 ▾</button>
-            <a class="file-link-alt" href="${b.file_url}" target="_blank" rel="noopener">새 창에서 열기 →</a>
-          </div>
-          <div class="bulletin-viewer" id="bulletin-viewer-${i}" hidden></div>
-        ` : ''}
-      </div>
+    grid.innerHTML = photos.map(p => `
+      <figure>
+        <img src="${p.url}" alt="${p.caption || dept ? dept.name : slug}" loading="lazy">
+        ${p.caption ? `<figcaption>${p.caption}</figcaption>` : ''}
+      </figure>
     `).join('');
   }
-  loadBulletins();
+  loadDepartment();
 </script>
 
 </body>

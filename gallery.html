@@ -67,6 +67,7 @@
       <option value="all">전체 연도</option>
     </select>
   </div>
+  <div id="dept-link-wrap" style="text-align:center;margin-bottom:1.5rem"></div>
   <div class="gallery-grid" id="gallery-grid">
     <p class="empty-state">사진을 불러오는 중입니다...</p>
   </div>
@@ -125,12 +126,20 @@
     renderPhotos();
   }
 
+  function updateDeptLink() {
+    const wrap = document.getElementById('dept-link-wrap');
+    wrap.innerHTML = currentDept === '전체'
+      ? ''
+      : `<a class="btn small gold" style="text-decoration:none;display:inline-block" href="department.html?slug=${encodeURIComponent(currentDept)}">${currentDept} 소개 보기 →</a>`;
+  }
+
   document.querySelectorAll('.dept-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.dept-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentDept = btn.dataset.dept;
       renderPhotos();
+      updateDeptLink();
     });
   });
   document.getElementById('year-select').addEventListener('change', renderPhotos);
