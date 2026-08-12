@@ -151,7 +151,7 @@ function initBottomNav() {
 
 async function applyTheme() {
   try {
-    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image').eq('id', 1).single();
+    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, logo_url').eq('id', 1).single();
     if (!data) return;
     const root = document.documentElement.style;
     if (data.banner_bg_color) root.setProperty('--banner-bg', data.banner_bg_color);
@@ -162,6 +162,11 @@ async function applyTheme() {
       document.body.classList.add('has-hero-photo');
     }
     document.body.dataset.heroStyle = data.hero_style || '';
+    const logo = document.getElementById('brand-logo');
+    if (logo && data.logo_url) {
+      logo.src = data.logo_url;
+      logo.hidden = false;
+    }
   } catch (e) {}
 }
 

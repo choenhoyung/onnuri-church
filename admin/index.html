@@ -181,6 +181,11 @@
         </div>
       </div>
       <div class="field" style="margin-top:1rem">
+        <label>교회 로고 (선택, 업로드하면 헤더의 교회 이름 앞에 표시됩니다)</label>
+        <input type="file" id="theme-logo-file" accept="image/*">
+      </div>
+      <div id="theme-logo-preview" style="margin-top:0.8rem"></div>
+      <div class="field" style="margin-top:1rem">
         <label>히어로 배경 사진 (선택, 업로드하면 배경색 대신 사진이 표시됩니다)</label>
         <input type="file" id="theme-hero-bg-file" accept="image/*">
       </div>
@@ -968,6 +973,7 @@
   // ---- 사이트 꾸미기 ----
   let currentHeroBgImage = '';
   let currentPastorPhoto = '';
+  let currentLogo = '';
 
   function bindRemoveImageBtn(btnId, onRemove) {
     const btn = document.getElementById(btnId);
@@ -975,13 +981,25 @@
   }
 
   async function loadTheme() {
-    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url, kakao_map_key').eq('id', 1).single();
+    const { data } = await sb.from('site_settings').select('banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url, kakao_map_key, logo_url').eq('id', 1).single();
     if (!data) return;
     document.getElementById('theme-banner-bg').value = data.banner_bg_color || '#1c2b3a';
     document.getElementById('theme-banner-text').value = data.banner_text_color || '#ffffff';
     document.getElementById('theme-font').value = data.font_family || '';
     document.getElementById('theme-hero-style').value = data.hero_style || '';
     document.getElementById('theme-kakao-key').value = data.kakao_map_key || '';
+
+    currentLogo = data.logo_url || '';
+    const logoPreview = document.getElementById('theme-logo-preview');
+    logoPreview.innerHTML = currentLogo
+      ? `<img src="${currentLogo}" style="max-width:160px;max-height:80px;border-radius:8px;display:block">
+         <button class="btn small danger" id="remove-logo-btn" style="margin-top:0.6rem">로고 제거</button>`
+      : '';
+    bindRemoveImageBtn('remove-logo-btn', async () => {
+      currentLogo = '';
+      await sb.from('site_settings').update({ logo_url: '' }).eq('id', 1);
+      loadTheme();
+    });
 
     currentHeroBgImage = data.hero_bg_image || '';
     const heroPreview = document.getElementById('theme-hero-bg-preview');
@@ -1016,6 +1034,19 @@
     const msg = document.getElementById('theme-msg');
     let hero_bg_image = currentHeroBgImage;
     let pastor_photo_url = currentPastorPhoto;
+    let logo_url = currentLogo;
+
+    const rawLogoFile = document.getElementById('theme-logo-file').files[0];
+    if (rawLogoFile) {
+      if (!rawLogoFile.type.startsWith('image/')) { msg.textContent = '이미지 파일만 업로드할 수 있습니다.'; return; }
+      if (rawLogoFile.size > 5 * 1024 * 1024) { msg.textContent = '이미지 용량은 5MB 이하여야 합니다.'; return; }
+      const logoFile = await compressImage(rawLogoFile, 400, 0.9);
+      const path = safeFileName(logoFile);
+      const { error: uploadError } = await sb.storage.from('hero-images').upload(path, logoFile);
+      if (uploadError) { msg.textContent = '업로드 실패: ' + uploadError.message; return; }
+      const { data: pub } = sb.storage.from('hero-images').getPublicUrl(path);
+      logo_url = pub.publicUrl;
+    }
 
     const rawHeroFile = document.getElementById('theme-hero-bg-file').files[0];
     if (rawHeroFile) {
@@ -1042,7 +1073,7 @@
     }
 
     const kakao_map_key = document.getElementById('theme-kakao-key').value.trim();
-    const { error } = await sb.from('site_settings').update({ banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url, kakao_map_key }).eq('id', 1);
+    const { error } = await sb.from('site_settings').update({ banner_bg_color, banner_text_color, font_family, hero_style, hero_bg_image, pastor_photo_url, kakao_map_key, logo_url }).eq('id', 1);
     msg.style.color = error ? '#b23b3b' : '#2b7a3b';
     msg.textContent = error ? '저장 실패: ' + error.message : '저장되었습니다. 실제 사이트에 바로 반영됩니다.';
     if (!error) loadTheme();
@@ -1050,7 +1081,7 @@
 
   document.getElementById('reset-theme-btn').addEventListener('click', async () => {
     const msg = document.getElementById('theme-msg');
-    const { error } = await sb.from('site_settings').update({ banner_bg_color: '', banner_text_color: '', font_family: '', hero_style: '', hero_bg_image: '', pastor_photo_url: '' }).eq('id', 1);
+    const { error } = await sb.from('site_settings').update({ banner_bg_color: '', banner_text_color: '', font_family: '', hero_style: '', hero_bg_image: '', pastor_photo_url: '', logo_url: '' }).eq('id', 1);
     if (!error) loadTheme();
     msg.style.color = error ? '#b23b3b' : '#2b7a3b';
     msg.textContent = error ? '실패: ' + error.message : '기본값으로 되돌렸습니다.';

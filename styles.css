@@ -39,7 +39,11 @@ header .brand {
   font-weight: 700;
   font-size: 1.15rem;
   letter-spacing: -0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
 }
+.brand-logo { height: 34px; width: auto; object-fit: contain; border-radius: 6px; }
 header nav a { opacity: 0.85; transition: opacity 0.15s; }
 header nav a:hover, header nav a.active { opacity: 1; color: var(--gold); }
 
