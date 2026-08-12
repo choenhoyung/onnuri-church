@@ -22,15 +22,12 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--ink);
+  background: var(--navy);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
 }
 header .brand {
   font-family: 'Noto Serif KR', serif;
@@ -48,10 +45,10 @@ header nav a:hover, header nav a.active { opacity: 1; color: var(--gold); }
 .hamburger-btn {
   width: 36px; height: 36px;
   display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px;
-  background: transparent; border: 1px solid rgba(0,0,0,0.15); border-radius: 6px;
+  background: transparent; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px;
   cursor: pointer; flex-shrink: 0;
 }
-.hamburger-btn span { width: 18px; height: 2px; background: var(--ink); display: block; }
+.hamburger-btn span { width: 18px; height: 2px; background: white; display: block; }
 
 /* 데스크톱 GNB */
 .site-nav { display: flex; gap: 0.2rem; }
@@ -60,8 +57,8 @@ header nav a:hover, header nav a.active { opacity: 1; color: var(--gold); }
   display: block;
   padding: 0.4rem 0.9rem;
   font-size: 0.95rem;
-  color: var(--ink);
-  opacity: 0.85;
+  color: white;
+  opacity: 0.9;
   border-bottom: 2px solid transparent;
   transition: border-color 0.15s, color 0.15s, opacity 0.15s;
 }
@@ -343,16 +340,8 @@ body[data-hero-style="artistic"] header {
   position: absolute;
   top: 0; left: 0; right: 0;
   background: transparent;
-  box-shadow: none;
-  color: white;
 }
-body[data-hero-style="artistic"] .brand,
-body[data-hero-style="artistic"] .nav-top-link,
-body[data-hero-style="artistic"] .admin-link-header { color: white; }
-body[data-hero-style="artistic"] .hamburger-btn { border-color: rgba(255,255,255,0.4); }
-body[data-hero-style="artistic"] .hamburger-btn span { background: white; }
 body[data-hero-style="artistic"] .hero,
-body[data-hero-style="artistic"] .hero-pro,
 body[data-hero-style="artistic"] .page-hero { padding-top: 9rem; }
 
 /* 최근 설교 */
