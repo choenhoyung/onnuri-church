@@ -83,7 +83,7 @@ header nav a:hover, header nav a.active { opacity: 1; color: var(--gold); }
   transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
   z-index: 200;
 }
-.nav-item:hover .nav-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+.nav-item:hover .nav-dropdown, .nav-item:focus-within .nav-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
 .nav-dropdown a {
   display: block;
   padding: 0.55rem 1.1rem;

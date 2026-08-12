@@ -1,3 +1,31 @@
+## [2026-08-12] GNB 드롭다운 키보드 접근성 개선
+
+### 진행상황
+- [x] 데스크톱 GNB 드롭다운에 `:focus-within` 추가 — 키보드(Tab)만으로 하위 메뉴 접근 가능
+- [x] `aria-haspopup`/`aria-expanded`/`role=menu,menuitem` 속성 추가 (스크린리더 지원)
+- [x] 모바일 드로어 아코디언 버튼에 `aria-expanded`/`aria-controls` 추가
+- [x] URL 마스킹 여부 점검 — 방문자에게는 label/title만 노출되고 href는 표준 방식대로만 사용 중이라 별도 수정 불필요로 판단
+
+### 결과
+- 외부에서 받은 개선 요청 문서가 React/Next.js 기준으로 작성되어 그대로 적용 불가 → 실제 스택(바닐라 JS)에 맞게 의도를 재해석해 적용
+- 변경된 파일: [menu.js](menu.js), [styles.css](styles.css)
+
+---
+
+## [2026-08-12] 관리자 메뉴 관리 URL 자동완성 개선
+
+### 진행상황
+- [x] 관리자가 "교회 일정"(schedule.html) 메뉴를 직접 추가·저장 완료 (전체 저장 기능 정상 작동 확인)
+- [x] 메뉴 관리 탭의 URL 입력창에 datalist 자동완성 추가 — 홈/교회소개/교회일정/앨범/주보/부서별 페이지를 클릭으로 선택 가능, 직접 입력도 계속 지원
+- [ ] 연혁(`church_history`)·섬김이(`serving_team` 테스트데이터 "ㅇㅇㅇ") 실제 정보 입력
+
+### 결과
+- 사용자가 매번 `about.html`, `department.html?slug=...` 같은 정확한 URL을 외워서 입력해야 하는 번거로움을 datalist 기반 자동완성으로 해결. 부서 목록은 `departments` 테이블에서 동적으로 불러와 옵션에 자동 반영됨.
+- 변경된 파일: [admin/index.html](admin/index.html)
+- GitHub 커밋 `1c22b7c` 푸시 → Vercel 자동 배포 확인 완료
+
+---
+
 ## [2026-08-12] 청주 온누리감리교회 홈페이지 구축 및 고도화
 
 ### 진행상황

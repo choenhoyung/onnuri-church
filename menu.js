@@ -20,16 +20,30 @@ const DEFAULT_MENU = [
 function renderNav(menu) {
   const nav = document.getElementById('site-nav');
   if (!nav) return;
-  nav.innerHTML = menu.map(item => `
+  nav.innerHTML = menu.map(item => {
+    const hasSubmenus = item.submenus && item.submenus.length;
+    return `
     <div class="nav-item">
-      <a class="nav-top-link" href="${item.url || '#'}">${item.title}</a>
-      ${item.submenus && item.submenus.length ? `
-        <div class="nav-dropdown">
-          ${item.submenus.map(s => `<a href="${s.url || '#'}">${s.label}</a>`).join('')}
+      <a class="nav-top-link" href="${item.url || '#'}"${hasSubmenus ? ' aria-haspopup="true" aria-expanded="false"' : ''}>${item.title}</a>
+      ${hasSubmenus ? `
+        <div class="nav-dropdown" role="menu">
+          ${item.submenus.map(s => `<a href="${s.url || '#'}" role="menuitem">${s.label}</a>`).join('')}
         </div>
       ` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
+  nav.querySelectorAll('.nav-item').forEach(navItem => {
+    const link = navItem.querySelector('.nav-top-link[aria-haspopup]');
+    if (!link) return;
+    const setExpanded = (v) => link.setAttribute('aria-expanded', String(v));
+    navItem.addEventListener('mouseenter', () => setExpanded(true));
+    navItem.addEventListener('mouseleave', () => setExpanded(false));
+    navItem.addEventListener('focusin', () => setExpanded(true));
+    navItem.addEventListener('focusout', (e) => {
+      if (!navItem.contains(e.relatedTarget)) setExpanded(false);
+    });
+  });
 }
 
 function renderSitemap(menu) {
@@ -48,23 +62,29 @@ function renderSitemap(menu) {
 function renderDrawer(menu) {
   const wrap = document.getElementById('drawer-accordion');
   if (!wrap) return;
-  wrap.innerHTML = menu.map((item, i) => `
+  wrap.innerHTML = menu.map((item, i) => {
+    const hasSubmenus = item.submenus && item.submenus.length;
+    return `
     <div class="drawer-group">
-      <button class="drawer-group-btn" data-i="${i}">
+      <button class="drawer-group-btn" data-i="${i}"${hasSubmenus ? ' aria-expanded="false" aria-controls="drawer-sub-' + i + '"' : ''}>
         <a href="${item.url || '#'}" onclick="event.stopPropagation()">${item.title}</a>
-        ${item.submenus && item.submenus.length ? '<span class="drawer-caret">▾</span>' : ''}
+        ${hasSubmenus ? '<span class="drawer-caret">▾</span>' : ''}
       </button>
-      ${item.submenus && item.submenus.length ? `
+      ${hasSubmenus ? `
         <div class="drawer-submenu" id="drawer-sub-${i}">
           ${item.submenus.map(s => `<a href="${s.url || '#'}">${s.label}</a>`).join('')}
         </div>
       ` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
   wrap.querySelectorAll('.drawer-group-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const sub = document.getElementById('drawer-sub-' + btn.dataset.i);
-      if (sub) sub.classList.toggle('open');
+      if (sub) {
+        sub.classList.toggle('open');
+        btn.setAttribute('aria-expanded', String(sub.classList.contains('open')));
+      }
     });
   });
 }
