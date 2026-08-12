@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>청주 온누리감리교회</title>
+<meta name="description" content="청주 온누리감리교회 홈페이지 - 예배시간 안내, 담임목사 소개, 최근 설교 영상, 교회 앨범과 주보를 확인하세요.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="청주 온누리감리교회">
+<meta property="og:description" content="예배시간 안내, 담임목사 소개, 최근 설교 영상, 교회 앨범과 주보를 만나보세요.">
+<meta property="og:url" content="https://onnuri-church-nu.vercel.app/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%9D%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;700;900&family=Gowun+Dodum&family=Nanum+Gothic:wght@400;700;800&family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
@@ -15,8 +21,12 @@
   }
   body.has-hero-photo .hero-pro {
     background:
-      linear-gradient(180deg, rgba(10,16,26,0.55), rgba(10,16,26,0.8)),
+      linear-gradient(180deg, rgba(8,13,22,0.62), rgba(8,13,22,0.88)),
       var(--hero-bg-image) center/cover no-repeat;
+  }
+  body.has-hero-photo .hero-pro-text h1,
+  body.has-hero-photo .hero-pro-text p.verse {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.35);
   }
   .hero-pro-inner {
     max-width: 1100px;
@@ -111,11 +121,11 @@
 </div>
 
 <nav class="side-tabs" id="side-tabs">
-  <a href="#worship" class="side-tab" data-target="worship"><span>예배</span><small>WORSHIP</small></a>
-  <a href="#pastor" class="side-tab" data-target="pastor"><span>목양</span><small>PASTOR</small></a>
-  <a href="#sermons" class="side-tab" data-target="sermons"><span>설교</span><small>SERMON</small></a>
-  <a href="#about" class="side-tab" data-target="about"><span>소개</span><small>ABOUT</small></a>
-  <a href="#location" class="side-tab" data-target="location"><span>오시는길</span><small>LOCATION</small></a>
+  <a href="#worship" class="side-tab" data-target="worship"><span class="dot"></span><span class="label">예배</span></a>
+  <a href="#pastor" class="side-tab" data-target="pastor"><span class="dot"></span><span class="label">목양</span></a>
+  <a href="#sermons" class="side-tab" data-target="sermons"><span class="dot"></span><span class="label">설교</span></a>
+  <a href="#about" class="side-tab" data-target="about"><span class="dot"></span><span class="label">소개</span></a>
+  <a href="#location" class="side-tab" data-target="location"><span class="dot"></span><span class="label">오시는길</span></a>
 </nav>
 
 <div class="hero-pro" id="worship">
@@ -145,7 +155,7 @@
 <section id="pastor">
   <h2 class="section-title">담임목사</h2>
   <p class="section-sub">말씀과 기도로 성도님들을 섬깁니다</p>
-  <div class="pastor">
+  <div class="pastor reveal">
     <div class="badge" id="pastor-badge">✝</div>
     <div class="text">
       <div class="role">SENIOR PASTOR</div>
@@ -165,17 +175,17 @@
   <h2 class="section-title">교회 소개</h2>
   <p class="section-sub" id="founded-line">1981년 3월 14일 설립, 함께 걸어온 믿음의 발자취</p>
   <div class="about-grid">
-    <div class="about-card">
+    <div class="about-card reveal">
       <div class="icon">🙏</div>
       <h4>WORSHIP</h4>
       <p id="about-worship">하나님께 드리는 예배를 최우선으로 삼고, 매일의 기도와 새벽예배로 하루를 시작합니다.</p>
     </div>
-    <div class="about-card">
+    <div class="about-card reveal">
       <div class="icon">❤️</div>
       <h4>LOVE</h4>
       <p id="about-love">가족 같은 공동체 안에서 서로의 삶을 나누고, 이웃과 마을을 섬기는 사랑을 실천합니다.</p>
     </div>
-    <div class="about-card">
+    <div class="about-card reveal">
       <div class="icon">📖</div>
       <h4>BIBLE</h4>
       <p id="about-bible">말씀 위에 굳게 서서 삶의 방향을 찾고, 다음 세대에게 신앙을 물려주는 교회입니다.</p>
@@ -187,13 +197,13 @@
   <h2 class="section-title">오시는 길</h2>
   <p class="section-sub">언제든 편안하게 찾아와 주세요</p>
   <div class="location">
-    <a class="map-link-card" href="https://naver.me/5OtRNLa4" target="_blank" rel="noopener">
+    <a class="map-link-card reveal" href="https://naver.me/5OtRNLa4" target="_blank" rel="noopener">
       <div class="map-link-icon">📍</div>
       <div class="map-link-title">네이버 지도에서 보기</div>
       <div class="map-link-sub">청주 온누리감리교회 위치를 지도 앱에서 확인하고<br>길찾기를 바로 이용해보세요</div>
       <span class="map-link-btn">네이버지도 열기 →</span>
     </a>
-    <div class="info">
+    <div class="info reveal">
       <dl>
         <dt>주소</dt>
         <dd id="info-address">충북 청주시 서원구 성봉로 194 (개신동)</dd>
@@ -261,7 +271,7 @@
     if (error || !data || data.length === 0) { section.style.display = 'none'; return; }
     section.style.display = 'block';
     grid.innerHTML = data.map(v => `
-      <a class="sermon-card" href="https://www.youtube.com/watch?v=${v.video_id}" target="_blank" rel="noopener">
+      <a class="sermon-card reveal" href="https://www.youtube.com/watch?v=${v.video_id}" target="_blank" rel="noopener">
         <div class="thumb-wrap">
           <img src="${v.thumbnail_url}" alt="${v.title}" loading="lazy">
           <div class="play-icon">▶</div>
@@ -287,8 +297,25 @@
     onScroll();
   }
 
+  function initScrollReveal() {
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal:not(.visible)').forEach(el => io.observe(el));
+  }
+
   loadContent();
-  loadSermons();
+  loadSermons().then(initScrollReveal);
+  initScrollReveal();
   initSideTabs();
 </script>
 
